@@ -59,7 +59,7 @@ in your Copilot Chat agent list automatically.
 
 ## Quickstart
 
-See **[docs/quickstart.md](docs/quickstart.md)** for the full walkthrough
+See **[docs.poesis.cloud/sdlc-agentic-framework/quickstart](https://docs.poesis.cloud/sdlc-agentic-framework/quickstart)** for the full walkthrough
 (target: first orchestrated PR in under 30 minutes).
 
 **TL;DR:**
