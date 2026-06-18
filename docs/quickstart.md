@@ -17,7 +17,6 @@ Before you start, you need:
 | Prerequisite | APM install path | Purpose |
 |---|---|---|
 | **SE:\* specialist bench agents** | `github.com/github/awesome-copilot` | Security, Architect, DevOps/CI, Tech Writer, UX, RAI agents |
-| **bmad-\* skills** | `github.com/bmadcode/bmad-method` | BMad Method skill library |
 
 > These components are **not** bundled in this package and are **not** relicensed under Poesis Cloud's
 > Apache-2.0. See [NOTICE](../NOTICE) and [CONTRIBUTING.md](../CONTRIBUTING.md).
@@ -40,10 +39,6 @@ git clone https://github.com/poesis-cloud/sdlc-agentic-framework \
 # SE:* specialist bench agents
 git clone https://github.com/github/awesome-copilot \
   ~/.vscode/agent-plugins/github.com/github/awesome-copilot
-
-# bmad-* skills
-git clone https://github.com/bmadcode/bmad-method \
-  ~/.vscode/agent-plugins/github.com/bmadcode/bmad-method
 ```
 
 Reload VS Code. All three orchestrators (`@vmo-orchestrator`, `@rte-orchestrator`,
@@ -134,7 +129,6 @@ You have completed the quickstart when:
 
 - Confirm that the orchestration-core skill is present:
   `ls ~/.vscode/agent-plugins/github.com/poesis-cloud/sdlc-agentic-framework/plugins/poesis-sdlc-agentic-framework/skills/`
-- Verify the `bmad-*` external prerequisites are installed (see [Step 1](#step-1--install-apm)).
 
 **"SE:\* bench agents not found"**
 

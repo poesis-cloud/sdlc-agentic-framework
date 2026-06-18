@@ -46,10 +46,6 @@ git clone https://github.com/poesis-cloud/sdlc-agentic-framework \
 # SE:* specialist bench agents
 git clone https://github.com/github/awesome-copilot \
   ~/.vscode/agent-plugins/github.com/github/awesome-copilot
-
-# bmad-* skills
-git clone https://github.com/bmadcode/bmad-method \
-  ~/.vscode/agent-plugins/github.com/bmadcode/bmad-method
 ```
 
 **3. Reload VS Code.** `@rte-orchestrator`, `@sm-orchestrator`, and `@vmo-orchestrator` appear
@@ -83,7 +79,6 @@ under this project's Apache-2.0 (see [NOTICE](NOTICE)):
 | Component | APM install path | Purpose |
 |---|---|---|
 | `SE:*` specialist bench | `github.com/github/awesome-copilot` | Security, Architect, DevOps/CI, Tech Writer, UX, RAI agents |
-| `bmad-*` skills | `github.com/bmadcode/bmad-method` | BMad Method skill library |
 | GitHub Copilot | VS Code extension (Microsoft) | IDE host — required for agent resolution |
 
 The `prerequisites` block in `plugins/poesis-sdlc-agentic-framework/plugin.json` lists these

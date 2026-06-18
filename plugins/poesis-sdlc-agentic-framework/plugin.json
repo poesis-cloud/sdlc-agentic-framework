@@ -1,11 +1,21 @@
 {
     "$license": "Copyright 2026 Poesis Cloud and contributors — Apache License, Version 2.0 — http://www.apache.org/licenses/LICENSE-2.0",
-    "name": "ai-team-orchestration",
+    "name": "poesis-sdlc-agentic-framework",
     "version": "0.1.0",
     "description": "SAFe-shaped SDLC orchestration — portfolio/program/iteration orchestrators, specialist bench, and model routing",
     "publisher": "poesis-cloud",
     "license": "Apache-2.0",
     "repository": "https://github.com/poesis-cloud/sdlc-agentic-framework",
+    "prerequisites": [
+        {
+            "name": "software-engineering-team",
+            "description": "SE:* specialist bench agents (Security, Architect, DevOps/CI, Tech Writer, UX Designer, Responsible AI, Product Manager). Dispatched by all three orchestrators.",
+            "publisher": "github",
+            "repository": "https://github.com/github/awesome-copilot",
+            "apm": "github.com/github/awesome-copilot",
+            "required": true
+        }
+    ],
     "agents": [
         "agents/rte-orchestrator.agent.md",
         "agents/sm-orchestrator.agent.md",

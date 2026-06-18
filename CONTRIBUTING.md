@@ -38,8 +38,6 @@ in or relicensed by this repository:
 | Component | Description | License |
 |---|---|---|
 | `SE:*` bench agents | Specialist subagent plugins for GitHub Copilot / VS Code | Microsoft / GitHub ToS |
-| `bmad-*` skills | BMad Method agentic skills | Upstream — see bmadcode/bmad-method |
-| `gds-*` skills | Game Development Skills | Upstream — see source repo |
 | AI Runway / Azure AI | Azure ML / inference services | Microsoft Azure service agreements |
 
 Do **not** include files derived from these external components in your PRs.

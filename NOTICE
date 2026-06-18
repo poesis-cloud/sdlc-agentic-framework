@@ -16,12 +16,6 @@ repository and are NOT relicensed under Poesis Cloud's Apache-2.0:
 - SE:* specialist bench agents
     (GitHub Copilot / VS Code extensions — subject to Microsoft / GitHub ToS)
 
-- bmad-* skills (BMad Method)
-    (<https://github.com/bmadcode/bmad-method> — see upstream license)
-
-- gds-* skills (Game Development Skills)
-    (see upstream license at source)
-
 - AI Runway / Azure AI services
     (Microsoft Azure — subject to Microsoft service agreements)
 
