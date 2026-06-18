@@ -29,13 +29,15 @@ It carries everything **common** to all three. Layer-specific flow lives in the 
 
 ## Personas
 
-- **Central Supervisor** — the human. The orchestrators **serve** the Central Supervisor. Owns the approval gates. Authors the portfolio (Strategic Themes + Epics) wearing two SAFe hats below; never authors Features or Stories (those are PM/PO work).
-  - **Business Owner hat** — value authority for the portfolio: owns Strategic Themes, approves Epics at the **★ Epic Gate**, makes pivot/persevere/stop calls. (This methodology *does* use a SAFe Business Owner — it is the Central Supervisor wearing this hat.)
-  - **Enterprise Architect hat** — owns the cross-product architectural runway and NFR backbone at the Epic level; drafts enabler Epics. Distinct from product-level `SE: Architect` (which owns per-product ADRs).
-- **vmo-orchestrator** — portfolio orchestrator (VMO / Agile Portfolio Operations — the operational arm of Lean Portfolio Management) and **single entry point**. Owns Strategic Themes + Epics + the Epic Gate; dispatches rte-orchestrator per ART. Never writes production code.
-- **rte-orchestrator** — program / ART orchestrator. Dispatched by vmo-orchestrator for an approved Epic, or invoked directly for ART work; dispatches sm-orchestrator for iterations. Never writes production code.
-- **sm-orchestrator** — iteration orchestrator. Dispatched by rte-orchestrator for execution, or invoked directly for iteration work. Never writes production code.
-- **The Bench** — the specialist subagents both orchestrators dispatch (table below).
+- **Central Supervisor** — the human; the **value authority** and the **owner of every approval gate**. Wears the **Business Owner** and **Enterprise Architect** hats as *authority* (directs + approves), and **dispatches the bench to author under those hats** rather than authoring artifacts personally. Final arbiter at each gate; never writes code.
+  - **Business Owner hat** — value authority for the portfolio: sets Strategic Themes, approves Epics at the **★ Epic Gate**, makes pivot/persevere/stop calls. **Default authoring agent: `SE: Product Manager` (BO hat).**
+  - **Enterprise Architect hat** — owns the cross-product architectural runway / NFR backbone at the Epic level; seeds enabler Epics. **Default authoring agent: `SE: Architect` (EA hat).**
+- **The three orchestrators are the *police* of their layer — not artifact owners.** Each **governs** its layer: it controls the **input/output artifacts** of the agents it dispatches, enforces conformance to the **reference templates it owns** and to **SAFe standard practice**, and owns the **flow** (gates, kanban transitions, WIP). It **never authors or owns a backlog artifact** — those belong to the hat-wearing author (**BO → Epic, PM → Feature, PO → Story**) — and **never writes production code**.
+  - **vmo-orchestrator** — portfolio layer. Polices Strategic Themes + Epics + the ★ Epic Gate; owns the **portfolio templates**; dispatches `SE: Product Manager` (BO hat) to author, and rte-orchestrator per ART. **Single entry point.**
+  - **rte-orchestrator** — program / ART layer. Polices Features + ADRs + the ★ ADR / Feature gates; owns the **program templates**; dispatches `SE: Product Manager` (PM hat) + `SE: Architect`, and sm-orchestrator for iterations.
+  - **sm-orchestrator** — iteration layer. Polices Stories + the ★ Story / PR gates; owns the **iteration templates**; dispatches `SE: Product Manager` (PO hat) + the dev/QA pair.
+- **Backlog authoring is one agent across three hats.** `SE: Product Manager` is the **default agent for the Business-Owner, PM, and PO hats** — it authors Epics + Strategic Themes (BO hat), Features (PM hat), and Stories (PO hat). Always **name the hat in the dispatch prefix** (`Acting as BO/PM/PO, …`).
+- **The Bench** — the specialist subagents the orchestrators dispatch (table below).
 
 > **No PRD tier.** This methodology has no Product Requirements Document. The defining intent that a PRD used to carry lives in the **Epic** (its hypothesis statement + outcome indicators) and cascades to Features and Stories. The backlog spine is **Strategic Theme → Epic → Feature → Story**.
 
@@ -45,7 +47,7 @@ All SAFe artifacts live at **poesis level** under `portfolio/<product-slug>/` (p
 
 ### Portfolio scope (singleton, cross-product)
 
-`portfolio/` is the meta-governance tier above the ARTs (template: [portfolio-init-template.md](./references/portfolio-init-template.md)). It owns:
+`portfolio/` is the meta-governance tier above the ARTs (template: [portfolio-init-template.md](../vmo-orchestration/references/portfolio-init-template.md)). It owns:
 
 - `portfolio.yaml` — manifest (Business Owner, Enterprise Architect, the `arts[]` = product slugs).
 - `strategic-themes.md` — the Strategic Themes singleton (top of the spine).
@@ -80,10 +82,9 @@ Dispatch via `runSubagent`. Subagent calls do **not** share context — the **fi
 
 | Bench role | Agent | When to dispatch |
 |---|---|---|
-| Epic drafting (PM hat) | `SE: Product Manager` | Help the Business Owner shape an Epic hypothesis + WSJF; identify Feature seeds |
+| Backlog authoring (BO/PM/PO hats) | `SE: Product Manager` | **Default agent for all three backlog hats** — authors Epics + Strategic Themes + WSJF (BO hat), Features + AC (PM hat), Stories + DoR (PO hat). Name the hat in the prefix (`Acting as BO/PM/PO, …`). |
 | Enterprise-architecture runway | `SE: Architect` | Draft the EA-hat runway / enabler Epics for the Central Supervisor's review |
-| Product Management (PM + PO) | `SE: Product Manager` | Feature derivation/refinement (PM hat); Story decomposition/acceptance (PO hat) |
-| Architecture | `SE: Architect` | Author ADRs; review structurant Stories; Architectural Sync |
+| Architecture | `SE: Architect` | Author ADRs; review structurant Stories; ART Sync |
 | Development | `ai-team-dev` | Code for Stories (Driver and/or Navigator) |
 | Quality Assurance | `ai-team-qa` | Acceptance against Story DoD; bug reports; QA sign-off |
 | Security | `SE: Security` | Trust boundaries, auth/crypto/secrets, threat modeling |
@@ -257,6 +258,22 @@ Every gate is named for the **artifact it validates** (no numbering). There are 
 
 > Four are **Central Supervisor human-approval** gates — **Epic**, **ADR**, **PR**, and **Feature** (the System Demo acceptance). The **Story Gate** is the orchestrator-run **Definition-of-Ready** check owned by `@sm-orchestrator` (`backlog -> ready`); it gates a Story into the pair-programming flow rather than requiring a human sign-off. There is **no PRD gate** — the PRD tier is removed; an Epic entering `portfolio-backlog` is what authorizes downstream Feature work.
 
+### Peer challenge (adversarial review before each gate)
+
+Every artifact is **challenged by a different-lens peer before it reaches its gate** — the SAFe collaboration spine (backlog refinement, ART Sync, pair CRITIQUE, security review, System Demo, Inspect & Adapt) made explicit. The owning orchestrator dispatches the challenger(s); a challenge **sharpens, never approves** — the gate (Central Supervisor) still decides. Keep it lean: 1–2 lens-focused challengers, no rubber-stamping.
+
+| Artifact | Challenger(s) — different lens | SAFe analog | Before |
+|---|---|---|---|
+| Epic | PM ⇄ EA hat; `SE: Responsible AI` / `SE: Security` on ethics/risk | Portfolio backlog refinement | ★ Epic Gate |
+| Feature + ADR | `SE: Architect` ⇄ `SE: Security` + `SE: DevOps/CI` | ART Sync / ADR review | ★ ADR Gate |
+| Story (pre-build) | PO ⇄ SM (DoR check) | Backlog refinement | ★ Story Gate |
+| Code (per unit) | Navigator ⇄ Driver (mandatory CRITIQUE); `SE: Security` on trust boundaries | Pair review | during execution |
+| PR | `SE: Security` (mandatory pre-merge) + `ai-team-qa` sign-off | PR review | ★ PR Gate |
+| Feature increment | Central Supervisor + bench feedback | System Demo | ★ Feature Gate |
+| The process itself | all roles | Inspect & Adapt / Retro | per PI / sprint |
+
+Material findings are logged to `sprint-N/gate-decisions.md` (sprint-scoped artifacts) or surfaced in the gate packet (Epic/ADR); an unresolved challenge is a `gate-decisions.md` entry (`accept` / `rework` / `defer`).
+
 ### WIP limits
 | Column | Limit |
 |---|---|
@@ -316,9 +333,10 @@ truth for content; the board is authoritative for non-gate status moves. Normati
 - **Workflow pain-point capture is mandatory.** Capture workflow friction into `portfolio/_improvement-log.md` **continuously, the moment it is observed** — never fix the meta-process inline mid-flow, and never wait for the retro to remember it. A pain point is an *input* (raw friction), not a solution; its output block is filled later at retro / I&A.
 - **Epic-rooted, no PRD.** There is no PRD tier. A Feature either rolls up to an approved Epic (`parent_epic: E-NN`, Epic in `portfolio-backlog`+) or is an explicit standalone engineering/operability Feature (`parent_epic: null` with a stated rationale). **ADR-first for structurant work.**
 - **Epics are the only cross-product artifact.** Cross-product coordination lives in an Epic; never author a single cross-product Feature — one Feature per product, each linked to the shared Epic.
-- **Central Supervisor authors only the portfolio** (Strategic Themes + Epics, via the BO/EA hats); never authors Features or Stories. PM owns Features; PO owns Stories within a `committed` Feature.
+- **Authoring vs policing.** The hat-wearing **author agents own the backlog artifacts**: `SE: Product Manager` authors Epics + Strategic Themes (BO hat), Features (PM hat), and Stories (PO hat); `SE: Architect` authors ADRs + the EA runway. The **orchestrators never author or own these** — they *police* their layer (control I/O artifacts, enforce template + SAFe conformance, own the flow / gates / kanban / templates). The **Central Supervisor approves** at the gates. One Feature per product, each linked to its shared Epic.
 - **QA-before-PR.** No Story reaches the **★ PR Gate** without `qa/S-NNN-signoff.md`.
-- **Observability stories load the instrumentation skill.** Any Story changing telemetry dispatches Driver + QA with the relevant observability skill loaded; the QA sign-off includes the skill's alignment audit with machine checks green. A failing machine check blocks `awaiting-pr`.
+- **Challenge-before-gate.** No artifact reaches its gate without its designated **peer challenge** (Peer-challenge matrix): a different-lens specialist adversarially reviews it first. A challenge sharpens but never approves — the gate still decides; material findings are logged to `sprint-N/gate-decisions.md` (sprint-scoped) or the gate packet.
+- **Observability stories load the instrumentation skill.** Any Story changing telemetry dispatches Driver + QA with the relevant observability skill loaded; the QA sign-off includes that skill's alignment audit with machine checks green. A failing machine check blocks `awaiting-pr`.
 - **Kanban files are rendered, never hand-edited.**
 - **GitHub Projects boards mirror the kanbans** (one Project per product); reconcile via
   portfolio/_sync per the sync protocol. A board move across a gate boundary is a request, never
@@ -368,28 +386,36 @@ Output (filled at/after Retro / Inspect & Adapt):
 
 All templates live in [references/](./references/). Refuse to author an artifact without consulting its template.
 
+**Template ownership (by layer).** Each orchestrator **owns and maintains** its tier's templates and enforces conformance; cross-cutting ones stay in orchestration-core. Authors always use the current owned version.
+
+- **`vmo-orchestration` owns:** portfolio-init, strategic-themes, epic, product-init, kanban-portfolio.
+- **`rte-orchestration` owns:** feature, adr, pi-objectives, risks, inspect-adapt, kanban-program.
+- **`sm-orchestration` owns:** sprint-plan, story, qa-signoff, daily, retro, progress, gate-decisions, kanban-team.
+- **`orchestration-core` owns (cross-cutting):** github board spec, sync protocol, sync config, cost-accounting, workflow-improvement-ledger, project-brief, anti-patterns, brainstorm-format.
+
+
 | Artifact | Path | Template |
 |---|---|---|
-| Portfolio init (singleton) | `portfolio/portfolio.yaml` | [portfolio-init-template.md](./references/portfolio-init-template.md) |
-| Strategic Themes (singleton) | `portfolio/strategic-themes.md` | [strategic-themes-template.md](./references/strategic-themes-template.md) |
-| Epic | `portfolio/epics/E-NN-*.md` | [epic-template.md](./references/epic-template.md) |
-| Portfolio Kanban (rendered) | `portfolio/kanban/portfolio.md` | [kanban-portfolio-template.md](./references/kanban-portfolio-template.md) |
-| Product manifest | `portfolio/<slug>/product.yaml` | [product-init-template.md](./references/product-init-template.md) |
-| Feature | `features/F-NN-*.md` | [feature-template.md](./references/feature-template.md) |
-| ADR | `architecture/adr-NNN-*.md` | [adr-template.md](./references/adr-template.md) |
-| Sprint plan | `sprint-N/plan.md` | [sprint-plan-template.md](./references/sprint-plan-template.md) |
-| Story | `sprint-N/stories/S-NNN.md` | [story-template.md](./references/story-template.md) |
-| QA sign-off | `sprint-N/qa/S-NNN-signoff.md` | [qa-signoff-template.md](./references/qa-signoff-template.md) |
-| Daily sync | `sprint-N/daily-DD.md` | [daily-template.md](./references/daily-template.md) |
-| Sprint retro | `sprint-N/retro.md` | [retro-template.md](./references/retro-template.md) |
-| Sprint progress | `sprint-N/progress.md` | [progress-template.md](./references/progress-template.md) |
-| Gate decision backlog | `sprint-N/gate-decisions.md` | [gate-decisions-template.md](./references/gate-decisions-template.md) |
+| Portfolio init (singleton) | `portfolio/portfolio.yaml` | [portfolio-init-template.md](../vmo-orchestration/references/portfolio-init-template.md) |
+| Strategic Themes (singleton) | `portfolio/strategic-themes.md` | [strategic-themes-template.md](../vmo-orchestration/references/strategic-themes-template.md) |
+| Epic | `portfolio/epics/E-NN-*.md` | [epic-template.md](../vmo-orchestration/references/epic-template.md) |
+| Portfolio Kanban (rendered) | `portfolio/kanban/portfolio.md` | [kanban-portfolio-template.md](../vmo-orchestration/references/kanban-portfolio-template.md) |
+| Product manifest | `portfolio/<slug>/product.yaml` | [product-init-template.md](../vmo-orchestration/references/product-init-template.md) |
+| Feature | `features/F-NN-*.md` | [feature-template.md](../rte-orchestration/references/feature-template.md) |
+| ADR | `architecture/adr-NNN-*.md` | [adr-template.md](../rte-orchestration/references/adr-template.md) |
+| Sprint plan | `sprint-N/plan.md` | [sprint-plan-template.md](../sm-orchestration/references/sprint-plan-template.md) |
+| Story | `sprint-N/stories/S-NNN.md` | [story-template.md](../sm-orchestration/references/story-template.md) |
+| QA sign-off | `sprint-N/qa/S-NNN-signoff.md` | [qa-signoff-template.md](../sm-orchestration/references/qa-signoff-template.md) |
+| Daily sync | `sprint-N/daily-DD.md` | [daily-template.md](../sm-orchestration/references/daily-template.md) |
+| Sprint retro | `sprint-N/retro.md` | [retro-template.md](../sm-orchestration/references/retro-template.md) |
+| Sprint progress | `sprint-N/progress.md` | [progress-template.md](../sm-orchestration/references/progress-template.md) |
+| Gate decision backlog | `sprint-N/gate-decisions.md` | [gate-decisions-template.md](../sm-orchestration/references/gate-decisions-template.md) |
 | Workflow improvement ledger (singleton) | `portfolio/_improvement-log.md` | [workflow-improvement-ledger-template.md](./references/workflow-improvement-ledger-template.md) |
-| PI objectives | `pi-M/pi-objectives.md` | [pi-objectives-template.md](./references/pi-objectives-template.md) |
-| PI risks | `pi-M/risks.md` | [risks-template.md](./references/risks-template.md) |
-| Inspect & Adapt | `pi-M/inspect-adapt.md` | [inspect-adapt-template.md](./references/inspect-adapt-template.md) |
-| Program Kanban (rendered) | `kanban/program.md` | [kanban-program-template.md](./references/kanban-program-template.md) |
-| Team Kanban (rendered) | `kanban/team-sprint-N.md` | [kanban-team-template.md](./references/kanban-team-template.md) |
+| PI objectives | `pi-M/pi-objectives.md` | [pi-objectives-template.md](../rte-orchestration/references/pi-objectives-template.md) |
+| PI risks | `pi-M/risks.md` | [risks-template.md](../rte-orchestration/references/risks-template.md) |
+| Inspect & Adapt | `pi-M/inspect-adapt.md` | [inspect-adapt-template.md](../rte-orchestration/references/inspect-adapt-template.md) |
+| Program Kanban (rendered) | `kanban/program.md` | [kanban-program-template.md](../rte-orchestration/references/kanban-program-template.md) |
+| Team Kanban (rendered) | `kanban/team-sprint-N.md` | [kanban-team-template.md](../sm-orchestration/references/kanban-team-template.md) |
 | GitHub board spec (normative) | — (GitHub Projects) | [github-projects-board-spec.md](./references/github-projects-board-spec.md) || GitHub sync config (per product) | `portfolio/<slug>/github-sync.yaml` | [github-sync-config-template.yaml.md](./references/github-sync-config-template.yaml.md) |
 | GitHub sync protocol (normative) | — (toolchain `portfolio/_sync/`) | [github-sync-protocol.md](./references/github-sync-protocol.md) |
 | Cost accounting protocol (normative) | — (`cost:` blocks; sourced from ecosystem debug logs) | [cost-accounting-protocol.md](./references/cost-accounting-protocol.md) |

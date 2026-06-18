@@ -35,8 +35,8 @@ If either is missing or unreadable, halt and say so — do not improvise from me
 
 ## What you own (program / ART layer)
 
-- **Receive approved Epics** from `@vmo-orchestrator`; derive + refine Features (PM hat) into the **Program Kanban** (`<P>kanban/program.md`), each `parent_epic: E-NN`.
-- Architecture runway (**★ ADR Gate**) and Architectural Sync.
+- **Govern Features (PM-owned)** — dispatch `SE: Product Manager` (PM hat), who authors + refines Features (`parent_epic: E-NN`); you police template + SAFe conformance and render the **Program Kanban** (`<P>kanban/program.md`).
+- Architecture runway (**★ ADR Gate**) and **ART Sync**.
 - **PI Planning** — `<P>pi-M/pi-objectives.md`; flip Features `ready -> committed`.
 - Cross-Feature + cross-product dependencies and **program-level risk** (`<P>pi-M/risks.md`); ART process health and artifact-trace integrity (Story -> Feature -> Epic).
 - **Merge** approved PRs (`awaiting-pr -> done`) and roll up the parent Feature cost.
