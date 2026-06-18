@@ -1,0 +1,192 @@
+# Copyright 2026 Poesis Cloud and contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# ============================================================
+# Model routing resolver — single source of truth for concrete model bindings.
+# ============================================================
+# The orchestrator agents (vmo-orchestrator, rte-orchestrator, sm-orchestrator) speak only TIERS + CAPABILITY TAGS (model-agnostic).
+# This file is the ONLY place that names concrete model strings and capability
+# scores and configuration profiles.
+# When the model lineup changes, edit THIS file — never hardcode a model name in
+# the agent policy.
+#
+# KEY FORMAT: Each model key MUST be the exact string to pass as the `model`
+# argument to `runSubagent`: "Model Name (Vendor)", vendor is always "copilot".
+# Each entry carries an `id:` field with the platform's internal model id for
+# cross-reference against the session catalog (models.json in debug-logs).
+# To verify a key is still valid: confirm its `id` appears in the session's
+# models.json, and that its `name` field matches the key without the vendor suffix.
+#
+# Resolution (performed by an orchestrator per dispatch):
+#   1. risk -> tier floor: critical -> tier-high; medium -> tier-balanced; low -> role default
+#   2. complexity -> tier floor: complex -> tier-high; involved -> tier-balanced; simple -> no raise
+#   3. final floor = max(risk_floor, complexity_floor, role_default)
+#   4. if no capability tags -> use the default model for the final floor tier
+#   5. else score all models whose tier >= final floor:
+#        score = sum(capability_scores[tag]) - (cost_rank * cost_penalty)
+#   6. choose highest score; ties -> lower cost_rank, then tier default
+#   7. resolve a configuration profile from `config_profiles`
+#   8. pass the resolved KEY string verbatim as the `model` tool argument.
+#      NEVER pass "Auto" as the model argument — if nothing resolves, HALT.
+# ============================================================
+
+# --- Tier ordering. Higher number clears lower floors. ---
+tier_rank:
+  tier-fast: 1
+  tier-balanced: 2
+  tier-high: 3
+
+# --- Scoring knobs. ---
+# Cost penalty keeps premium models from winning unless their capability fit is
+# meaningfully better. Raise this to be more cost-sensitive; lower it to be more
+# quality-sensitive.
+scoring:
+  cost_penalty: 0.35
+
+# --- Configuration profiles. ---
+# These profiles are logged to the Central Supervisor and included in every subagent prompt.
+# If the execution API exposes native sampling controls, map these values to the
+# provider settings. If not, treat the profile as a behavioral contract in the
+# prompt while still passing the resolved `model` argument.
+config_profiles:
+  deterministic:
+    use_for: "implementation, schema/JSON/YAML, factual edits, exact artifact updates"
+    intent: "prefer precision, repeatability, concise output, no creative variation"
+    temperature: 0.1
+    top_p: 0.9
+    max_output: "normal"
+  audit:
+    use_for: "QA, security review, architecture review, gate evidence, contradiction hunting"
+    intent: "be skeptical, evidence-grounded, cite files/artifacts, prioritize risks/findings"
+    temperature: 0.0
+    top_p: 0.85
+    max_output: "normal"
+  exploratory:
+    use_for: "planning, investigation, option generation, root-cause exploration"
+    intent: "explore alternatives, state assumptions, preserve uncertainty"
+    temperature: 0.3
+    top_p: 0.95
+    max_output: "extended"
+  creative:
+    use_for: "brainstorming, prose, UX copy, naming, storytelling, PRD narrative"
+    intent: "generate varied high-quality options while keeping constraints visible"
+    temperature: 0.7
+    top_p: 0.95
+    max_output: "extended"
+
+default_config_profile: deterministic
+
+# --- Tier anchors: the GPT line, ordered by capability AND cost (coherent). ---
+# Tiers are the default workhorses. They are cost-ordered so "higher tier" also
+# means "more expensive" — no cost inversions here.
+# Values here MUST match a key in `models:` below (and therefore a valid runSubagent model arg).
+tiers:
+  tier-high:     "GPT-5.5 (copilot)"        # strongest general reasoning; default for critical risk
+  tier-balanced: "GPT-5.4 (copilot)"        # everyday workhorse; default for medium risk
+  tier-fast:     "GPT-5.4 mini (copilot)"   # cheap tight loops; low-risk boilerplate
+
+# --- Scored model profiles. ---
+# Capability scores are relative 0..5 judgments for routing, not benchmarks.
+# The orchestrator filters by `tier`, sums the requested capability scores, subtracts the
+# cost penalty, then picks the highest-scoring candidate.
+models:
+  "GPT-5.5 (copilot)":          # catalog id: gpt-5.5  |  display name: GPT-5.5
+    tier: tier-high
+    cost_rank: 4
+    notes: "Strongest general reasoning; default for critical risk."
+    capability_scores:
+      deep-reasoning: 5
+      code-specialized: 4
+      creative: 3
+      editorial: 3
+      long-context: 3
+      multimodal: 2
+      fast-iteration: 2
+      structured-output: 4
+
+  "GPT-5.4 (copilot)":          # catalog id: gpt-5.4  |  display name: GPT-5.4
+    tier: tier-balanced
+    cost_rank: 2
+    notes: "Everyday workhorse for medium-risk general work."
+    capability_scores:
+      deep-reasoning: 4
+      code-specialized: 3
+      creative: 3
+      editorial: 3
+      long-context: 3
+      multimodal: 2
+      fast-iteration: 4
+      structured-output: 5
+
+  "GPT-5.4 mini (copilot)":     # catalog id: gpt-5.4-mini  |  display name: GPT-5.4 mini
+    tier: tier-fast
+    cost_rank: 1
+    notes: "Cheap tight loops, boilerplate, mechanical edits."
+    capability_scores:
+      deep-reasoning: 2
+      code-specialized: 2
+      creative: 2
+      editorial: 2
+      long-context: 1
+      multimodal: 1
+      fast-iteration: 5
+      structured-output: 3
+
+  "GPT-5.3-Codex (copilot)":    # catalog id: gpt-5.3-codex  |  display name: GPT-5.3-Codex
+    tier: tier-balanced
+    cost_rank: 3
+    notes: "Code specialist; often best for implementation/test-heavy dispatches."
+    capability_scores:
+      deep-reasoning: 3
+      code-specialized: 5
+      creative: 2
+      editorial: 2
+      long-context: 3
+      multimodal: 1
+      fast-iteration: 3
+      structured-output: 4
+
+  "Claude Opus 4.8 (copilot)":  # catalog id: claude-opus-4.8  |  display name: Claude Opus 4.8
+    tier: tier-high
+    cost_rank: 5
+    notes: "Premium creative/editorial specialist; use deliberately."
+    capability_scores:
+      deep-reasoning: 4
+      code-specialized: 3
+      creative: 5
+      editorial: 5
+      long-context: 3
+      multimodal: 2
+      fast-iteration: 1
+      structured-output: 3
+
+  "Gemini 2.5 Pro (copilot)":   # catalog id: gemini-2.5-pro  |  display name: Gemini 2.5 Pro
+    tier: tier-high
+    cost_rank: 4
+    notes: "Long-context and multimodal specialist."
+    capability_scores:
+      deep-reasoning: 4
+      code-specialized: 3
+      creative: 3
+      editorial: 3
+      long-context: 5
+      multimodal: 5
+      fast-iteration: 2
+      structured-output: 3
+
+# --- Fallback: configuration error, not a runtime shortcut. ---
+# If nothing resolves (YAML unreadable, all models below floor): HALT and report
+# the misconfiguration to the Central Supervisor. DO NOT silently pass "Auto"
+# as the model argument — that produces non-deterministic, unverifiable dispatches.
+fallback: HALT_AND_REPORT
