@@ -79,6 +79,7 @@ Open Copilot Chat and type:
 ```
 
 The VMO will:
+
 1. Help you shape the Epic hypothesis and WSJF scoring.
 2. Approve it at ★ Gate 0.
 3. Dispatch `@rte-orchestrator` to derive Features and plan the sprint.

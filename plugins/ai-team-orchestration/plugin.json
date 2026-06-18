@@ -1,20 +1,20 @@
 {
-  "$license": "Copyright 2026 Poesis Cloud and contributors — Apache License, Version 2.0 — http://www.apache.org/licenses/LICENSE-2.0",
-  "name": "ai-team-orchestration",
-  "version": "0.1.0",
-  "description": "SAFe-shaped SDLC orchestration — portfolio/program/iteration orchestrators, specialist bench, and model routing",
-  "publisher": "poesis-cloud",
-  "license": "Apache-2.0",
-  "repository": "https://github.com/poesis-cloud/sdlc-agentic-framework",
-  "agents": [
-    "agents/rte-orchestrator.agent.md",
-    "agents/sm-orchestrator.agent.md",
-    "agents/vmo-orchestrator.agent.md"
-  ],
-  "skills": [
-    "skills/orchestration-core/SKILL.md",
-    "skills/rte-orchestration/SKILL.md",
-    "skills/sm-orchestration/SKILL.md",
-    "skills/vmo-orchestration/SKILL.md"
-  ]
+    "$license": "Copyright 2026 Poesis Cloud and contributors — Apache License, Version 2.0 — http://www.apache.org/licenses/LICENSE-2.0",
+    "name": "ai-team-orchestration",
+    "version": "0.1.0",
+    "description": "SAFe-shaped SDLC orchestration — portfolio/program/iteration orchestrators, specialist bench, and model routing",
+    "publisher": "poesis-cloud",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/poesis-cloud/sdlc-agentic-framework",
+    "agents": [
+        "agents/rte-orchestrator.agent.md",
+        "agents/sm-orchestrator.agent.md",
+        "agents/vmo-orchestrator.agent.md"
+    ],
+    "skills": [
+        "skills/orchestration-core/SKILL.md",
+        "skills/rte-orchestration/SKILL.md",
+        "skills/sm-orchestration/SKILL.md",
+        "skills/vmo-orchestration/SKILL.md"
+    ]
 }
