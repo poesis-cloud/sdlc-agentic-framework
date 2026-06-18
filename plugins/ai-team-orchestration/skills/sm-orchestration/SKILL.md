@@ -1,6 +1,6 @@
 ---
 name: sm-orchestration
-description: 'Team / iteration layer of the SAFe orchestration. Loaded by @sm-orchestrator on top of the orchestration-core base. Covers Iteration Planning + sprint plan, Story grooming (PO hat) and DoR, the pair-programming micro-cycle (HUDDLE -> DRIVE -> CRITIQUE -> ACCEPT/REJECT -> SWAP), the Team Kanban, WIP limits, Daily Sync / Iteration Review / Retro, QA acceptance, and Gate 3 PR-packet preparation. Use for everything at or below the iteration line.'
+description: 'Team / iteration layer of the SAFe orchestration. Loaded by @sm-orchestrator on top of the orchestration-core base. Covers Iteration Planning + sprint plan, Story grooming (PO hat) and ★ Gate DoR (backlog → ready validation), the pair-programming micro-cycle (HUDDLE -> DRIVE -> CRITIQUE -> ACCEPT/REJECT -> SWAP), the Team Kanban, WIP limits, Daily Sync / Iteration Review / Retro, QA acceptance, and Gate 3 PR-packet preparation. Use for everything at or below the iteration line.'
 ---
 
 <!-- Copyright 2026 Poesis Cloud and contributors
@@ -39,7 +39,18 @@ The sm-orchestrator is dispatched by `@rte-orchestrator` at PI/Iteration Plannin
 ## Iteration flow
 
 1. **Iteration Planning** — receive committed Features from rte-orchestrator; write `<P>sprint-N/plan.md`; verify each Story's `risk`/`complexity`; assign Driver/Navigator.
-2. **Story derivation (PO hat)** — dispatch `SE: Product Manager` as PO (prefix `Acting as PO, …`) -> `<P>sprint-N/stories/S-NNN.md` (`status: backlog`). PO grooms DoR -> `ready`. When a Story enters `ready`, notify rte-orchestrator to flip the parent Feature `committed -> in-progress`.
+2. **Story derivation + ★ Gate DoR (PO hat)** — dispatch `SE: Product Manager` as PO (prefix `Acting as PO, …`) -> `<P>sprint-N/stories/S-NNN.md` (`status: backlog`). PO grooms the Story to DoR, then SM runs **★ Gate DoR** before flipping `backlog -> ready`:
+
+   | DoR check | Must hold |
+   |---|---|
+   | ID + title + parent Feature | present |
+   | Acceptance criteria | unambiguous and testable (no "should/may") |
+   | Parent Feature is `committed` or `in-progress` | verified in Feature frontmatter |
+   | No unresolved upstream Story blockers | confirmed |
+   | Repos in scope identified | from `product.yaml > repos[]` |
+   | Driver/Navigator pair assigned | SM assigns before `ready` |
+
+   If any check fails the Story stays `backlog`; SM documents the gap and iterates with the PO before re-running the gate. On all checks pass: Story → `ready`. **Notify rte-orchestrator** to flip the parent Feature `committed -> in-progress` (first Story to pass DoR triggers this).
 3. **Execution** — run the pair micro-cycle (below): DRIVE (`in-progress`) -> CRITIQUE (`in-review`) -> ACCEPT/REJECT -> SWAP. Hold Daily Sync; remove blockers; update `progress.md`. (No per-dispatch cost bookkeeping — token usage is read from the ecosystem debug logs later, once, at Story close.)
 4. **Acceptance** — Story `in-review -> in-qa`; dispatch `ai-team-qa` -> `<P>sprint-N/qa/S-NNN-signoff.md`. PO confirms AC. On pass -> `awaiting-pr`; on fail -> back to `in-progress` with bug report. On `-> awaiting-pr`, **commit the Story `cost:` once** by fetching its dev + QA dispatch tokens directly from the session debug logs (cost-accounting protocol §5).
 5. **Gate 3 packet** — **publish before the gate (mandatory):** push the Story to the product Team board — `python3 portfolio/_sync/sync.py push <slug> --apply` — and write back its `github:` block, so the Central Supervisor reviews the Story card (at `awaiting-pr`) on GitHub *during* the gate. Then persist the Story file — `python3 portfolio/_sync/git-sync.py push <slug> --apply`. Then open the PR in the relevant code repo (from `product.yaml > repos[]`), attach the QA sign-off and any `gate-decisions.md` entries, and present to the Central Supervisor. No Story reaches ★ Gate 3 without its board card. **rte-orchestrator merges** on approval.
