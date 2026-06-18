@@ -63,7 +63,7 @@ Every Story is executed by a pair: a **Driver** and a **Navigator**. The sm-orch
 
 ### Micro-cycle
 
-```
+```text
 HUDDLE        -> Pair reads Story + parent Feature + dependent ADRs.
                  Driver proposes implementation outline (<=5 bullets).
                  Navigator critiques the outline before any code.
@@ -78,7 +78,7 @@ SWAP          -> Driver becomes Navigator, Navigator becomes Driver. Next unit.
 
 ### Commit attribution
 
-```
+```text
 <subject> (pair: <Driver>/<Navigator>)
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
