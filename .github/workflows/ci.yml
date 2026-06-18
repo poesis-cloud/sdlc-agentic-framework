@@ -6,63 +6,91 @@
 name: ci
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
 
 permissions:
-  contents: read
+    contents: read
 
 jobs:
-  lint-markdown:
-    name: Lint Markdown
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    lint-markdown:
+        name: Lint Markdown
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Run markdownlint-cli2
-        uses: DavidAnson/markdownlint-cli2-action@v19
-        with:
-          globs: "**/*.md"
-          config: ".markdownlint.yaml"
+            - name: Run markdownlint-cli2
+              uses: DavidAnson/markdownlint-cli2-action@v19
+              with:
+                  globs: "**/*.md"
+                  config: ".markdownlint.yaml"
 
-  lint-yaml:
-    name: Lint YAML
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    lint-yaml:
+        name: Lint YAML
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: Install yamllint
-        run: pip install yamllint --quiet
+            - name: Install yamllint
+              run: pip install yamllint --quiet
 
-      - name: Run yamllint
-        run: yamllint -d relaxed .
+            - name: Run yamllint
+              run: yamllint -d relaxed .
 
-  check-license-headers:
-    name: Check License Headers (stub)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    check-license-headers:
+        name: Check License Headers
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      - name: License-header check — stub
-        # STUB: passes vacuously until SHIP plugin content is committed (Sprint 2 / F-02).
-        # SHIP files are framework constituents (skills/agents/instructions) living under
-        # plugins/<name>/ directories in the APM layout. None exist yet in v0.1 scaffold.
-        # Replace this step with a real header-check tool once plugin directories land.
-          # See license-header-template.txt (repo root) for the required header format.
-        run: |
-          if [ ! -d "plugins" ]; then
-            echo "stub: no plugins/ directory found — SHIP set is empty, licence-header check skipped (OK)"
-            exit 0
-          fi
-          SHIP_FILES=$(find plugins/ \( -name '*.md' -o -name '*.yaml' -o -name '*.yml' \) 2>/dev/null || true)
-          if [ -z "$SHIP_FILES" ]; then
-            echo "stub: plugins/ exists but contains no SHIP files — licence-header check skipped (OK)"
-            exit 0
-          fi
-          echo "SHIP files detected in plugins/ — licence-header enforcement required (wire real check for F-02)"
-          exit 1
+            - name: Check Apache-2.0 headers on plugins/ files
+              run: |
+                  MISSING=""
+                  while IFS= read -r -d '' f; do
+                    if ! grep -q "Copyright 2026 Poesis Cloud" "$f"; then
+                      MISSING="$MISSING\n  $f"
+                    fi
+                  done < <(find plugins/ \( -name '*.md' -o -name '*.yaml' \) -print0 2>/dev/null)
+                  if [ -n "$MISSING" ]; then
+                    printf "ERROR: missing Apache-2.0 header in:%b\n" "$MISSING"
+                    exit 1
+                  fi
+                  echo "OK: all plugins/ files carry the Apache-2.0 header"
+
+    scrub-withhold:
+        name: WITHHOLD Scrub
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Scan plugins/ for WITHHOLD keywords
+              # Fail-closed: any keyword hit from WITHHOLD-keywords.txt in plugins/ fails the build.
+              # See WITHHOLD-keywords.txt for the corpus and SHIP manifest.
+              run: |
+                  if [ ! -f WITHHOLD-keywords.txt ]; then
+                    echo "ERROR: WITHHOLD-keywords.txt not found — fail-closed"
+                    exit 1
+                  fi
+                  if [ ! -d plugins/ ]; then
+                    echo "OK: no plugins/ directory — nothing to scan"
+                    exit 0
+                  fi
+                  HITS=""
+                  while IFS= read -r kw; do
+                    [[ "$kw" =~ ^#.*$ || -z "$kw" ]] && continue
+                    matches=$(grep -r -i -l "$kw" plugins/ 2>/dev/null || true)
+                    if [ -n "$matches" ]; then
+                      HITS="$HITS\n  keyword='$kw' in: $matches"
+                    fi
+                  done < WITHHOLD-keywords.txt
+                  if [ -n "$HITS" ]; then
+                    printf "ERROR: WITHHOLD keyword hits in plugins/:%b\n" "$HITS"
+                    exit 1
+                  fi
+                  echo "OK: zero WITHHOLD keyword hits in plugins/"
