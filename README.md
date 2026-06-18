@@ -29,8 +29,9 @@ into your IDE via the VS Code Agent Plugin Manager (APM). It includes:
 
 ## Install
 
-This framework uses the **VS Code Agent Plugin Manager (APM)** convention: a `git clone` into
-`~/.vscode/agent-plugins/` makes agents and skills available to GitHub Copilot automatically.
+This framework uses the **VS Code Agent Plugin Manager (APM)** convention — a directory that
+VS Code / GitHub Copilot scans automatically at startup. There is no `apm` CLI to install;
+the install mechanism is a plain `git clone` into `~/.vscode/agent-plugins/`.
 
 **1. Install this framework:**
 

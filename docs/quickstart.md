@@ -26,11 +26,11 @@ Before you start, you need:
 
 ## Step 1 — Install (APM)
 
-This framework and its prerequisites all use the **VS Code Agent Plugin Manager (APM)** convention:
-a `git clone` into `~/.vscode/agent-plugins/<publisher>/<repo>` makes agents and skills
-available to GitHub Copilot automatically — no extension installation or config file needed.
+The VS Code **Agent Plugin Manager (APM)** is a directory that GitHub Copilot scans automatically
+at startup — there is no `apm` CLI or separate tool to install. The install mechanism is a plain
+`git clone` into `~/.vscode/agent-plugins/<publisher>/<repo>`.
 
-**Install this framework + prerequisites:**
+This framework and its prerequisites all follow that convention:
 
 ```bash
 # This framework
