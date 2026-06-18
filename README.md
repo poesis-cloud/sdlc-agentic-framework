@@ -30,21 +30,29 @@ into your IDE via the VS Code Agent Plugin Manager (APM). It includes:
 ## Install
 
 ```bash
-# APM install (VS Code Agent Plugin Manager)
 git clone https://github.com/poesis-cloud/sdlc-agentic-framework \
   ~/.vscode/agent-plugins/github.com/poesis-cloud/sdlc-agentic-framework
 ```
 
-Restart VS Code. The orchestrators and bench agents will appear in your Copilot
-agent list automatically.
+Reload VS Code. `@rte-orchestrator`, `@sm-orchestrator`, and `@vmo-orchestrator` will appear
+in your Copilot Chat agent list automatically.
 
-*Full quickstart guide coming in v0.1.*
+**Pin to a release:** `git checkout v0.1.0` in the cloned directory.
+
+**Update:** `git pull` in the cloned directory.
 
 ---
 
 ## Quickstart
 
-*Coming in v0.1.*
+See **[docs/quickstart.md](docs/quickstart.md)** for the full walkthrough
+(target: first orchestrated PR in under 30 minutes).
+
+**TL;DR:**
+
+1. Install (above).
+2. Open Copilot Chat → type `@vmo-orchestrator` to start a new Epic.
+3. Follow the orchestration chain: VMO → RTE → SM → first PR.
 
 ---
 
