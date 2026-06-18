@@ -81,7 +81,7 @@ first lines of the file:
 # limitations under the License.
 ```
 
-The canonical template is at [`docs/license-header-template.txt`](docs/license-header-template.txt).
+The canonical template is at [`license-header-template.txt`](license-header-template.txt) in the repo root.
 
 Use `#` for YAML/Markdown/shell files. For JSON files (which do not support comments),
 embed the copyright in a `"$license"` key at the top level.

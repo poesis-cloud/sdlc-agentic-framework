@@ -53,7 +53,7 @@ jobs:
         # SHIP files are framework constituents (skills/agents/instructions) living under
         # plugins/<name>/ directories in the APM layout. None exist yet in v0.1 scaffold.
         # Replace this step with a real header-check tool once plugin directories land.
-        # See docs/license-header-template.txt for the required header format.
+          # See license-header-template.txt (repo root) for the required header format.
         run: |
           if [ ! -d "plugins" ]; then
             echo "stub: no plugins/ directory found — SHIP set is empty, licence-header check skipped (OK)"
