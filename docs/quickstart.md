@@ -11,28 +11,43 @@ Before you start, you need:
 
 1. **VS Code** (1.90 or later) with the **GitHub Copilot** extension installed and signed in.
 2. **Git** (any recent version).
-3. The following **external prerequisites** (distributed separately under their own licences):
+3. The following **external prerequisites**, each installed via the same APM convention
+   (`git clone` into `~/.vscode/agent-plugins/<publisher>/<repo>`):
 
-| Prerequisite | Install |
-|---|---|
-| **SE:\* specialist bench agents** | Install via the [software-engineering-team plugin](https://github.com/github/awesome-copilot) or equivalent Copilot extension |
-| **bmad-\* skills** | Clone [bmadcode/bmad-method](https://github.com/bmadcode/bmad-method) into `~/.vscode/agent-plugins/github.com/bmadcode/bmad-method` |
-| **gds-\* skills** | Install from the upstream source per its documentation |
+| Prerequisite | APM install path | Purpose |
+|---|---|---|
+| **SE:\* specialist bench agents** | `github.com/github/awesome-copilot` | Security, Architect, DevOps/CI, Tech Writer, UX, RAI agents |
+| **bmad-\* skills** | `github.com/bmadcode/bmad-method` | BMad Method skill library |
 
 > These components are **not** bundled in this package and are **not** relicensed under Poesis Cloud's
 > Apache-2.0. See [NOTICE](../NOTICE) and [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ---
 
-## Step 1 — Install
+## Step 1 — Install (APM)
+
+This framework and its prerequisites all use the **VS Code Agent Plugin Manager (APM)** convention:
+a `git clone` into `~/.vscode/agent-plugins/<publisher>/<repo>` makes agents and skills
+available to GitHub Copilot automatically — no extension installation or config file needed.
+
+**Install this framework + prerequisites:**
 
 ```bash
+# This framework
 git clone https://github.com/poesis-cloud/sdlc-agentic-framework \
   ~/.vscode/agent-plugins/github.com/poesis-cloud/sdlc-agentic-framework
+
+# SE:* specialist bench agents
+git clone https://github.com/github/awesome-copilot \
+  ~/.vscode/agent-plugins/github.com/github/awesome-copilot
+
+# bmad-* skills
+git clone https://github.com/bmadcode/bmad-method \
+  ~/.vscode/agent-plugins/github.com/bmadcode/bmad-method
 ```
 
-That's it. VS Code GitHub Copilot automatically scans `~/.vscode/agent-plugins/` for agents and
-skills — no further configuration needed.
+Reload VS Code. All three orchestrators (`@vmo-orchestrator`, `@rte-orchestrator`,
+`@sm-orchestrator`) and the SE:\* bench agents appear in your Copilot Chat `@` list automatically.
 
 **To pin to a specific version:**
 
@@ -113,18 +128,19 @@ You have completed the quickstart when:
   The `github.com/<org>/<repo>` path structure is required by the VS Code APM convention.
 - Reload VS Code window (`Ctrl+Shift+P` → "Developer: Reload Window").
 - Check that GitHub Copilot extension is up to date (v1.270 or later recommended).
-- Verify `plugins/ai-team-orchestration/agents/` contains `*.agent.md` files.
+- Verify `plugins/poesis-sdlc-agentic-framework/agents/` contains `*.agent.md` files.
 
 **Skills fail to load (agent says "skill not found")**
 
 - Confirm that the orchestration-core skill is present:
-  `ls ~/.vscode/agent-plugins/github.com/poesis-cloud/sdlc-agentic-framework/plugins/ai-team-orchestration/skills/`
-- Verify the `bmad-*` and `gds-*` external prerequisites are installed if the agent tries to load them.
+  `ls ~/.vscode/agent-plugins/github.com/poesis-cloud/sdlc-agentic-framework/plugins/poesis-sdlc-agentic-framework/skills/`
+- Verify the `bmad-*` external prerequisites are installed (see [Step 1](#step-1--install-apm)).
 
 **"SE:\* bench agents not found"**
 
-- The SE:\* bench (`SE: Security`, `SE: Architect`, etc.) are external prerequisites.
-  Install the `software-engineering-team` plugin or equivalent. See [Prerequisites](#prerequisites).
+- The SE:\* bench is a prerequisite installed separately via APM.
+  Run the `git clone https://github.com/github/awesome-copilot` command from [Step 1](#step-1--install-apm),
+  then reload VS Code.
 
 ---
 

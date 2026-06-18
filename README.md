@@ -29,12 +29,29 @@ into your IDE via the VS Code Agent Plugin Manager (APM). It includes:
 
 ## Install
 
+This framework uses the **VS Code Agent Plugin Manager (APM)** convention: a `git clone` into
+`~/.vscode/agent-plugins/` makes agents and skills available to GitHub Copilot automatically.
+
+**1. Install this framework:**
+
 ```bash
 git clone https://github.com/poesis-cloud/sdlc-agentic-framework \
   ~/.vscode/agent-plugins/github.com/poesis-cloud/sdlc-agentic-framework
 ```
 
-Reload VS Code. `@rte-orchestrator`, `@sm-orchestrator`, and `@vmo-orchestrator` will appear
+**2. Install the required prerequisites** (same APM convention):
+
+```bash
+# SE:* specialist bench agents
+git clone https://github.com/github/awesome-copilot \
+  ~/.vscode/agent-plugins/github.com/github/awesome-copilot
+
+# bmad-* skills
+git clone https://github.com/bmadcode/bmad-method \
+  ~/.vscode/agent-plugins/github.com/bmadcode/bmad-method
+```
+
+**3. Reload VS Code.** `@rte-orchestrator`, `@sm-orchestrator`, and `@vmo-orchestrator` appear
 in your Copilot Chat agent list automatically.
 
 **Pin to a release:** `git checkout v0.1.0` in the cloned directory.
@@ -58,18 +75,20 @@ See **[docs/quickstart.md](docs/quickstart.md)** for the full walkthrough
 
 ## External prerequisites
 
-The framework is designed to work alongside the following external components.
-They must be installed separately and are distributed under their own upstream licenses:
+The framework depends on the following external components, installable via the same APM
+convention. They are distributed under their own upstream licenses and are **not** relicensed
+under this project's Apache-2.0 (see [NOTICE](NOTICE)):
 
-| Component | Install |
-|---|---|
-| `SE:*` bench agents | Via VS Code Copilot extensions |
-| `bmad-*` skills | See [bmadcode/bmad-method](https://github.com/bmadcode/bmad-method) |
-| `gds-*` skills | See upstream repo |
-| GitHub Copilot | VS Code extension (Microsoft) |
+| Component | APM install path | Purpose |
+|---|---|---|
+| `SE:*` specialist bench | `github.com/github/awesome-copilot` | Security, Architect, DevOps/CI, Tech Writer, UX, RAI agents |
+| `bmad-*` skills | `github.com/bmadcode/bmad-method` | BMad Method skill library |
+| GitHub Copilot | VS Code extension (Microsoft) | IDE host — required for agent resolution |
 
-These components are **not** relicensed under this project's Apache-2.0.
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [NOTICE](NOTICE) for details.
+The `prerequisites` block in `plugins/poesis-sdlc-agentic-framework/plugin.json` lists these
+dependencies in machine-readable form for future APM tooling.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [NOTICE](NOTICE) for license details.
 
 ---
 
