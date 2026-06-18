@@ -1,6 +1,6 @@
 ---
 name: sm-orchestration
-description: 'Team / iteration layer of the SAFe orchestration. Loaded by @sm-orchestrator on top of the orchestration-core base. Covers Iteration Planning + sprint plan, Story grooming (PO hat) and ★ Gate DoR (backlog → ready validation), the pair-programming micro-cycle (HUDDLE -> DRIVE -> CRITIQUE -> ACCEPT/REJECT -> SWAP), the Team Kanban, WIP limits, Daily Sync / Iteration Review / Retro, QA acceptance, and Gate 3 PR-packet preparation. Use for everything at or below the iteration line.'
+description: 'Team / iteration layer of the SAFe orchestration. Loaded by @sm-orchestrator on top of the orchestration-core base. Covers Iteration Planning + sprint plan, Story grooming (PO hat) and the ★ Story Gate (backlog → ready Definition-of-Ready validation), the pair-programming micro-cycle (HUDDLE -> DRIVE -> CRITIQUE -> ACCEPT/REJECT -> SWAP), the Team Kanban, WIP limits, Daily Sync / Iteration Review / Retro, QA acceptance, and ★ PR Gate packet preparation. Use for everything at or below the iteration line.'
 ---
 
 <!-- Copyright 2026 Poesis Cloud and contributors
@@ -24,22 +24,22 @@ Layer-specific procedure for **`@sm-orchestrator`**. Always load [orchestration-
 ## What the sm-orchestrator owns
 
 - Facilitate **Iteration Planning**; write `<P>sprint-N/plan.md`; assign Driver/Navigator per Story.
-- Drive **Story grooming** (PO hat via `SE: Product Manager`) and the **DoR** check (`backlog -> ready`).
+- Drive **Story grooming** (PO hat via `SE: Product Manager`) and the **★ Story Gate** check (`backlog -> ready`).
 - Render and maintain the **Team Kanban** (`<P>kanban/team-sprint-N.md`).
 - Coach the **pair-programming micro-cycle** and own the in-iteration Story transitions.
 - Enforce **WIP limits**; remove iteration-level blockers; escalate program-level to `@rte-orchestrator`.
 - Facilitate **Daily Sync** (`<P>sprint-N/daily-N.md`), **Iteration Review**, **Retro** (`<P>sprint-N/retro.md`); update `<P>sprint-N/progress.md`.
-- Run **QA acceptance** (dispatch `ai-team-qa`) and prepare the **Gate 3 PR packet** (Story -> `awaiting-pr`).
+- Run **QA acceptance** (dispatch `ai-team-qa`) and prepare the **★ PR Gate packet** (Story -> `awaiting-pr`).
 - **Commit the Story token cost once** at `in-qa -> awaiting-pr`: fetch the Story's dev + QA dispatch tokens directly from the session debug logs (matched by `S-NNN`; **no intermediary ledger**), write the Story `cost:` block once, per the [cost-accounting protocol](../orchestration-core/references/cost-accounting-protocol.md).
 - **Capture iteration-level workflow pain points** into `portfolio/_improvement-log.md` continuously (pair micro-cycle friction, DoR/DoD ambiguity, kanban/template friction, QA-loop friction, dispatch/tool gaps) — raw symptom only (input block, `status: open`), no inline fix.
 - **Neutrality:** facilitate; do not decide scope. The sm-orchestrator **never writes production code**.
 
-The sm-orchestrator is dispatched by `@rte-orchestrator` at PI/Iteration Planning, or invoked directly by the Central Supervisor for iteration work. It hands the Story to the Central Supervisor at **★ Gate 3 (PR)** and back to `@rte-orchestrator` for merge.
+The sm-orchestrator is dispatched by `@rte-orchestrator` at PI/Iteration Planning, or invoked directly by the Central Supervisor for iteration work. It hands the Story to the Central Supervisor at the **★ PR Gate** and back to `@rte-orchestrator` for merge.
 
 ## Iteration flow
 
 1. **Iteration Planning** — receive committed Features from rte-orchestrator; write `<P>sprint-N/plan.md`; verify each Story's `risk`/`complexity`; assign Driver/Navigator.
-2. **Story derivation + ★ Gate DoR (PO hat)** — dispatch `SE: Product Manager` as PO (prefix `Acting as PO, …`) -> `<P>sprint-N/stories/S-NNN.md` (`status: backlog`). PO grooms the Story to DoR, then SM runs **★ Gate DoR** before flipping `backlog -> ready`:
+2. **Story derivation + ★ Story Gate (PO hat)** — dispatch `SE: Product Manager` as PO (prefix `Acting as PO, …`) -> `<P>sprint-N/stories/S-NNN.md` (`status: backlog`). PO grooms the Story to DoR, then SM runs the **★ Story Gate** (Definition-of-Ready check) before flipping `backlog -> ready`:
 
    | DoR check | Must hold |
    |---|---|
@@ -53,12 +53,12 @@ The sm-orchestrator is dispatched by `@rte-orchestrator` at PI/Iteration Plannin
    If any check fails the Story stays `backlog`; SM documents the gap and iterates with the PO before re-running the gate. On all checks pass: Story → `ready`. **Notify rte-orchestrator** to flip the parent Feature `committed -> in-progress` (first Story to pass DoR triggers this).
 3. **Execution** — run the pair micro-cycle (below): DRIVE (`in-progress`) -> CRITIQUE (`in-review`) -> ACCEPT/REJECT -> SWAP. Hold Daily Sync; remove blockers; update `progress.md`. (No per-dispatch cost bookkeeping — token usage is read from the ecosystem debug logs later, once, at Story close.)
 4. **Acceptance** — Story `in-review -> in-qa`; dispatch `ai-team-qa` -> `<P>sprint-N/qa/S-NNN-signoff.md`. PO confirms AC. On pass -> `awaiting-pr`; on fail -> back to `in-progress` with bug report. On `-> awaiting-pr`, **commit the Story `cost:` once** by fetching its dev + QA dispatch tokens directly from the session debug logs (cost-accounting protocol §5).
-5. **Gate 3 packet** — **publish before the gate (mandatory):** push the Story to the product Team board — `python3 portfolio/_sync/sync.py push <slug> --apply` — and write back its `github:` block, so the Central Supervisor reviews the Story card (at `awaiting-pr`) on GitHub *during* the gate. Then persist the Story file — `python3 portfolio/_sync/git-sync.py push <slug> --apply`. Then open the PR in the relevant code repo (from `product.yaml > repos[]`), attach the QA sign-off and any `gate-decisions.md` entries, and present to the Central Supervisor. No Story reaches ★ Gate 3 without its board card. **rte-orchestrator merges** on approval.
+5. **★ PR Gate packet** — **publish before the gate (mandatory):** push the Story to the product Team board — `python3 portfolio/_sync/sync.py push <slug> --apply` — and write back its `github:` block, so the Central Supervisor reviews the Story card (at `awaiting-pr`) on GitHub *during* the gate. Then persist the Story file — `python3 portfolio/_sync/git-sync.py push <slug> --apply`. Then open the PR in the relevant code repo (from `product.yaml > repos[]`), attach the QA sign-off and any `gate-decisions.md` entries, and present to the Central Supervisor. No Story reaches the ★ PR Gate without its board card. **rte-orchestrator merges** on approval.
 6. **Retro** — at iteration close, write `<P>sprint-N/retro.md` (include the mandatory Central Supervisor input section). **Pull open sprint-scope pain points** from `portfolio/_improvement-log.md` as retro input: root-cause each, resolve iteration-local ones into a meta-artifact improvement (fill the entry's output block, mark it `resolved`), and feed program/ART-scope ones up to the PI Inspect & Adapt.
 
 ## Team Kanban ownership
 
-The sm-orchestrator renders `<P>kanban/team-sprint-N.md` from Story frontmatter after every Story status flip. It owns `ready`, `blocked` (iteration), and coaches the `in-progress`/`in-review` pair transitions (Owner = Driver / Navigator respectively). `ai-team-qa` owns `in-qa`; the Central Supervisor owns Gate 3; rte-orchestrator owns the `awaiting-pr -> done` merge. See orchestration-core for the full table.
+The sm-orchestrator renders `<P>kanban/team-sprint-N.md` from Story frontmatter after every Story status flip. It owns `ready`, `blocked` (iteration), and coaches the `in-progress`/`in-review` pair transitions (Owner = Driver / Navigator respectively). `ai-team-qa` owns `in-qa`; the Central Supervisor owns the ★ PR Gate; rte-orchestrator owns the `awaiting-pr -> done` merge. See orchestration-core for the full table.
 
 ## Pair Programming
 

@@ -1,6 +1,6 @@
 ---
 name: orchestration-core
-description: 'Shared SAFe orchestration base for the AI development team. Mutualized mechanics loaded by ALL THREE orchestrators — @vmo-orchestrator (portfolio layer), @rte-orchestrator (program/ART layer), and @sm-orchestrator (iteration layer): personas (incl. Business-Owner / Enterprise-Architect hats), product- and portfolio-scoped workspace model, the specialist bench, LLM routing policy, kanban + status-transition mechanics (Portfolio/Program/Team), the human gates (Gate 0 Epic, 2 ADR, 3 PR, 4 Demo), invariants, the gate-decision backlog, the filesystem-blackboard rule, and the artifact-template catalog. Use whenever orchestrating Epics -> Features -> Stories -> execution -> demo, or recovering project state.'
+description: 'Shared SAFe orchestration base for the AI development team. Mutualized mechanics loaded by ALL THREE orchestrators — @vmo-orchestrator (portfolio layer), @rte-orchestrator (program/ART layer), and @sm-orchestrator (iteration layer): personas (incl. Business-Owner / Enterprise-Architect hats), product- and portfolio-scoped workspace model, the specialist bench, LLM routing policy, kanban + status-transition mechanics (Portfolio/Program/Team), the gates named by validated artifact (Epic, ADR, Story, PR, Feature), invariants, the gate-decision backlog, the filesystem-blackboard rule, and the artifact-template catalog. Use whenever orchestrating Epics -> Features -> Stories -> execution -> demo, or recovering project state.'
 ---
 
 <!-- Copyright 2026 Poesis Cloud and contributors
@@ -21,7 +21,7 @@ description: 'Shared SAFe orchestration base for the AI development team. Mutual
 
 This is the **mutualized** orchestration skill. All three orchestration agents load it:
 
-- **`@vmo-orchestrator`** — portfolio layer (Strategic Themes, Epics, Gate 0, Portfolio Kanban, ART registration, portfolio risk + Epic cost). See [vmo-orchestration skill](../vmo-orchestration/SKILL.md).
+- **`@vmo-orchestrator`** — portfolio layer (Strategic Themes, Epics, the Epic Gate, Portfolio Kanban, ART registration, portfolio risk + Epic cost). See [vmo-orchestration skill](../vmo-orchestration/SKILL.md).
 - **`@rte-orchestrator`** — program / ART layer (Features, PI, ADR / Demo gates, ART health). See [rte-orchestration skill](../rte-orchestration/SKILL.md).
 - **`@sm-orchestrator`** — team / iteration layer (Stories, sprints, pair execution, PR gate prep). See [sm-orchestration skill](../sm-orchestration/SKILL.md).
 
@@ -30,9 +30,9 @@ It carries everything **common** to all three. Layer-specific flow lives in the 
 ## Personas
 
 - **Central Supervisor** — the human. The orchestrators **serve** the Central Supervisor. Owns the approval gates. Authors the portfolio (Strategic Themes + Epics) wearing two SAFe hats below; never authors Features or Stories (those are PM/PO work).
-  - **Business Owner hat** — value authority for the portfolio: owns Strategic Themes, approves Epics at **★ Gate 0**, makes pivot/persevere/stop calls. (This methodology *does* use a SAFe Business Owner — it is the Central Supervisor wearing this hat.)
+  - **Business Owner hat** — value authority for the portfolio: owns Strategic Themes, approves Epics at the **★ Epic Gate**, makes pivot/persevere/stop calls. (This methodology *does* use a SAFe Business Owner — it is the Central Supervisor wearing this hat.)
   - **Enterprise Architect hat** — owns the cross-product architectural runway and NFR backbone at the Epic level; drafts enabler Epics. Distinct from product-level `SE: Architect` (which owns per-product ADRs).
-- **vmo-orchestrator** — portfolio orchestrator (VMO / Agile Portfolio Operations — the operational arm of Lean Portfolio Management) and **single entry point**. Owns Strategic Themes + Epics + Gate 0; dispatches rte-orchestrator per ART. Never writes production code.
+- **vmo-orchestrator** — portfolio orchestrator (VMO / Agile Portfolio Operations — the operational arm of Lean Portfolio Management) and **single entry point**. Owns Strategic Themes + Epics + the Epic Gate; dispatches rte-orchestrator per ART. Never writes production code.
 - **rte-orchestrator** — program / ART orchestrator. Dispatched by vmo-orchestrator for an approved Epic, or invoked directly for ART work; dispatches sm-orchestrator for iterations. Never writes production code.
 - **sm-orchestrator** — iteration orchestrator. Dispatched by rte-orchestrator for execution, or invoked directly for iteration work. Never writes production code.
 - **The Bench** — the specialist subagents both orchestrators dispatch (table below).
@@ -121,7 +121,7 @@ Both orchestrators MUST set the `model` argument on `runSubagent` by running the
 model_score = sum(capability_scores[tag] for each required tag) - (cost_rank * cost_penalty)
 ```
 
-Mark a task **critical** if any hold: security boundaries / authn-authz / secrets / crypto / tenant isolation; architecture-runway / ADR-impacting; production incident / data-loss / migration logic; disputed gate evidence (★ Gate 2/3/4). Mark **medium** for normal feature work, refactors, Feature/Story refinement. Else **low**.
+Mark a task **critical** if any hold: security boundaries / authn-authz / secrets / crypto / tenant isolation; architecture-runway / ADR-impacting; production incident / data-loss / migration logic; disputed gate evidence (★ ADR / PR / Feature gates). Mark **medium** for normal feature work, refactors, Feature/Story refinement. Else **low**.
 
 Complexity: `simple` (single file, known pattern), `involved` (2-5 files, multiple ACs, some design), `complex` (cross-repo/layer, >5 files, ambiguous design, migrations, concurrency, large context).
 
@@ -176,7 +176,7 @@ the named blackboard paths already do — so the log self-attributes. Each `cost
 from those logs **once**, at the artifact's terminal status, per the [cost-accounting protocol](./references/cost-accounting-protocol.md):
 
 - **Story** `→ awaiting-pr`: `@sm-orchestrator` sums the Story's dev + QA dispatch tokens from the logs.
-- **Feature** `→ done` (★ Gate 4): `@rte-orchestrator` fetches Feature overhead + Σ child Stories.
+- **Feature** `→ done` (★ Feature Gate): `@rte-orchestrator` fetches Feature overhead + Σ child Stories.
 - **Epic** `→ done`: `@vmo-orchestrator` fetches Epic overhead + Σ child Features.
 
 The snapshot is `source: measured` when the logs are present, `estimated` only if they are gone; it is
@@ -211,7 +211,7 @@ For every transition you MUST:
 | **funnel** | Central Supervisor (BO hat) | Raw Epic idea capture | — |
 | **reviewing** | vmo-orchestrator | Epic hypothesis + rough WSJF (PM assists) | — |
 | **analyzing** | Central Supervisor (EA hat) | Runway draft; products + Feature seeds (`SE: Architect` assists) | — |
-| **portfolio-backlog** | Central Supervisor (BO hat) | Epic approval | **★ Gate 0 — Epic** |
+| **portfolio-backlog** | Central Supervisor (BO hat) | Epic approval | **★ Epic Gate** |
 | **implementing** | vmo-orchestrator | First child Feature enters its product Program Kanban (rte-orchestrator notifies) | — |
 | **done** | Central Supervisor (BO hat) | Epic outcome accepted (vmo-orchestrator facilitates after the ART's last child Feature is `done`) | — |
 | **blocked** *(flag)* | vmo-orchestrator | Portfolio-level impediment removal | — |
@@ -223,11 +223,11 @@ For every transition you MUST:
 |---|---|---|---|
 | **funnel** | `SE: Product Manager` (PM) | Feature derivation from an Epic (or standalone) | — |
 | **refined** | `SE: Product Manager` (PM) | AC + WSJF + `structurant` flag | — |
-| **adr-pending** | `SE: Architect` | Architecture runway | **★ Gate 2 — ADR** |
+| **adr-pending** | `SE: Architect` | Architecture runway | **★ ADR Gate** |
 | **ready** | rte-orchestrator | PI Planning intake | — |
 | **committed** | rte-orchestrator | PI commit + Iteration Planning handoff | — |
 | **in-progress** | sm-orchestrator | Iteration execution rollup | — |
-| **done** | Central Supervisor | System Demo + acceptance | **★ Gate 4 — Demo** |
+| **done** | Central Supervisor | System Demo + acceptance | **★ Feature Gate** |
 | **blocked** *(flag)* | rte-orchestrator | Program-level impediment removal | — |
 
 ### Team Kanban — Stories (sm-orchestrator drives; PO-owned overall, sprint-scoped)
@@ -236,23 +236,26 @@ For every transition you MUST:
 | Column | Owner | Processing instance | Gate |
 |---|---|---|---|
 | **backlog** | `SE: Product Manager` (PO) | Story derivation | — |
-| **ready** | sm-orchestrator | Story grooming / DoR check; assign Driver+Navigator | — |
+| **ready** | sm-orchestrator | Story grooming / DoR check; assign Driver+Navigator | **★ Story Gate** |
 | **in-progress** | Driver | Pair-programming DRIVE | — |
 | **in-review** | Navigator | Pair-programming CRITIQUE | — |
 | **in-qa** | `ai-team-qa` | QA acceptance vs DoD | — |
-| **awaiting-pr** | Central Supervisor | PR review | **★ Gate 3 — PR** |
+| **awaiting-pr** | Central Supervisor | PR review | **★ PR Gate** |
 | **done** | rte-orchestrator | PR merge (after approval) | — |
 | **blocked** *(flag)* | sm-orchestrator | Iteration impediment removal | — |
 
 ### Gates (summary)
-| Gate | Transition | Owner |
-|---|---|---|
-| ★ Gate 0 — Epic | Epic `analyzing -> portfolio-backlog` | Central Supervisor (BO hat) |
-| ★ Gate 2 — ADR | Feature `adr-pending -> ready` | Central Supervisor |
-| ★ Gate 3 — PR | Story `awaiting-pr -> done` | Central Supervisor |
-| ★ Gate 4 — Demo | Feature `in-progress -> done` | Central Supervisor |
+Every gate is named for the **artifact it validates** (no numbering). There are exactly five:
 
-> Gate numbering keeps the established **2/3/4** (ADR/PR/Demo). **Gate 0** is the new portfolio entry gate. There is no Gate 1 — the former PRD gate is removed with the PRD tier; an Epic entering `portfolio-backlog` is what now authorizes downstream Feature work.
+| Gate | Validates | Transition | Owner |
+|---|---|---|---|
+| ★ Epic Gate | Epic | Epic `analyzing -> portfolio-backlog` | Central Supervisor (BO hat) |
+| ★ ADR Gate | ADR | Feature `adr-pending -> ready` | Central Supervisor |
+| ★ Story Gate | Story (DoR) | Story `backlog -> ready` | sm-orchestrator |
+| ★ PR Gate | PR | Story `awaiting-pr -> done` | Central Supervisor |
+| ★ Feature Gate | Feature | Feature `in-progress -> done` (System Demo) | Central Supervisor |
+
+> Four are **Central Supervisor human-approval** gates — **Epic**, **ADR**, **PR**, and **Feature** (the System Demo acceptance). The **Story Gate** is the orchestrator-run **Definition-of-Ready** check owned by `@sm-orchestrator` (`backlog -> ready`); it gates a Story into the pair-programming flow rather than requiring a human sign-off. There is **no PRD gate** — the PRD tier is removed; an Epic entering `portfolio-backlog` is what authorizes downstream Feature work.
 
 ### WIP limits
 | Column | Limit |
@@ -314,15 +317,16 @@ truth for content; the board is authoritative for non-gate status moves. Normati
 - **Epic-rooted, no PRD.** There is no PRD tier. A Feature either rolls up to an approved Epic (`parent_epic: E-NN`, Epic in `portfolio-backlog`+) or is an explicit standalone engineering/operability Feature (`parent_epic: null` with a stated rationale). **ADR-first for structurant work.**
 - **Epics are the only cross-product artifact.** Cross-product coordination lives in an Epic; never author a single cross-product Feature — one Feature per product, each linked to the shared Epic.
 - **Central Supervisor authors only the portfolio** (Strategic Themes + Epics, via the BO/EA hats); never authors Features or Stories. PM owns Features; PO owns Stories within a `committed` Feature.
-- **QA-before-PR.** No Gate 3 PR without `qa/S-NNN-signoff.md`.
+- **QA-before-PR.** No Story reaches the **★ PR Gate** without `qa/S-NNN-signoff.md`.
+- **Observability stories load the instrumentation skill.** Any Story changing telemetry dispatches Driver + QA with the relevant observability skill loaded; the QA sign-off includes the skill's alignment audit with machine checks green. A failing machine check blocks `awaiting-pr`.
 - **Kanban files are rendered, never hand-edited.**
 - **GitHub Projects boards mirror the kanbans** (one Project per product); reconcile via
   portfolio/_sync per the sync protocol. A board move across a gate boundary is a request, never
   approval. **Publish-before-gate (all tiers, mandatory):** every work item is pushed to its GitHub
   Project board *before* the validation gate that governs it, and its `github:` block is written
-  back, so the Central Supervisor reviews its card on GitHub *during* the gate — **Epic → ★ Gate 0**
-  (Portfolio Epics board; `@vmo-orchestrator`), **Feature → ★ Gate 2 ADR** (product Program board;
-  `@rte-orchestrator`), **Story → ★ Gate 3 PR** (product Team board; `@sm-orchestrator`). No item
+  back, so the Central Supervisor reviews its card on GitHub *during* the gate — **Epic → ★ Epic Gate**
+  (Portfolio Epics board; `@vmo-orchestrator`), **Feature → ★ ADR Gate** (product Program board;
+  `@rte-orchestrator`), **Story → ★ PR Gate** (product Team board; `@sm-orchestrator`). No item
   reaches its gate without a live board card; the gate-crossing status flip itself is still never
   auto-applied (board spec §8).
 - **One commit per Story unit of work**, trailer `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`; pair commits add `(pair: <Driver>/<Navigator>)`.

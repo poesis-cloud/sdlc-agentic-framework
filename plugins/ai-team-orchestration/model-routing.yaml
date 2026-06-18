@@ -92,16 +92,16 @@ default_config_profile: deterministic
 # means "more expensive" — no cost inversions here.
 # Values here MUST match a key in `models:` below (and therefore a valid runSubagent model arg).
 tiers:
-  tier-high:     "GPT-5.5 (copilot)"        # strongest general reasoning; default for critical risk
-  tier-balanced: "GPT-5.4 (copilot)"        # everyday workhorse; default for medium risk
-  tier-fast:     "GPT-5.4 mini (copilot)"   # cheap tight loops; low-risk boilerplate
+  tier-high: "GPT-5.5 (copilot)" # strongest general reasoning; default for critical risk
+  tier-balanced: "GPT-5.4 (copilot)" # everyday workhorse; default for medium risk
+  tier-fast: "GPT-5.4 mini (copilot)" # cheap tight loops; low-risk boilerplate
 
 # --- Scored model profiles. ---
 # Capability scores are relative 0..5 judgments for routing, not benchmarks.
 # The orchestrator filters by `tier`, sums the requested capability scores, subtracts the
 # cost penalty, then picks the highest-scoring candidate.
 models:
-  "GPT-5.5 (copilot)":          # catalog id: gpt-5.5  |  display name: GPT-5.5
+  "GPT-5.5 (copilot)": # catalog id: gpt-5.5  |  display name: GPT-5.5
     tier: tier-high
     cost_rank: 4
     notes: "Strongest general reasoning; default for critical risk."
@@ -115,7 +115,7 @@ models:
       fast-iteration: 2
       structured-output: 4
 
-  "GPT-5.4 (copilot)":          # catalog id: gpt-5.4  |  display name: GPT-5.4
+  "GPT-5.4 (copilot)": # catalog id: gpt-5.4  |  display name: GPT-5.4
     tier: tier-balanced
     cost_rank: 2
     notes: "Everyday workhorse for medium-risk general work."
@@ -129,7 +129,7 @@ models:
       fast-iteration: 4
       structured-output: 5
 
-  "GPT-5.4 mini (copilot)":     # catalog id: gpt-5.4-mini  |  display name: GPT-5.4 mini
+  "GPT-5.4 mini (copilot)": # catalog id: gpt-5.4-mini  |  display name: GPT-5.4 mini
     tier: tier-fast
     cost_rank: 1
     notes: "Cheap tight loops, boilerplate, mechanical edits."
@@ -143,7 +143,7 @@ models:
       fast-iteration: 5
       structured-output: 3
 
-  "GPT-5.3-Codex (copilot)":    # catalog id: gpt-5.3-codex  |  display name: GPT-5.3-Codex
+  "GPT-5.3-Codex (copilot)": # catalog id: gpt-5.3-codex  |  display name: GPT-5.3-Codex
     tier: tier-balanced
     cost_rank: 3
     notes: "Code specialist; often best for implementation/test-heavy dispatches."
@@ -157,7 +157,7 @@ models:
       fast-iteration: 3
       structured-output: 4
 
-  "Claude Opus 4.8 (copilot)":  # catalog id: claude-opus-4.8  |  display name: Claude Opus 4.8
+  "Claude Opus 4.8 (copilot)": # catalog id: claude-opus-4.8  |  display name: Claude Opus 4.8
     tier: tier-high
     cost_rank: 5
     notes: "Premium creative/editorial specialist; use deliberately."
@@ -171,7 +171,7 @@ models:
       fast-iteration: 1
       structured-output: 3
 
-  "Gemini 2.5 Pro (copilot)":   # catalog id: gemini-2.5-pro  |  display name: Gemini 2.5 Pro
+  "Gemini 2.5 Pro (copilot)": # catalog id: gemini-2.5-pro  |  display name: Gemini 2.5 Pro
     tier: tier-high
     cost_rank: 4
     notes: "Long-context and multimodal specialist."
