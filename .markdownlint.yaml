@@ -1,0 +1,13 @@
+# markdownlint-cli2 configuration
+# Relaxed ruleset for the scaffold phase; tighten once content lands.
+
+default: true
+
+# MD013 — line length: disable (skills/agents files have long lines)
+MD013: false
+
+# MD033 — inline HTML: allow (badges in README)
+MD033: false
+
+# MD041 — first line must be h1: disable (NOTICE, template files)
+MD041: false

@@ -1,0 +1,68 @@
+---
+# CI baseline for sdlc-agentic-framework
+# Runs on every push and PR to main.
+# Jobs: markdown lint, YAML lint, license-header check (stub — enforces once SHIP content lands).
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run markdownlint-cli2
+        uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: "**/*.md"
+          config: ".markdownlint.yaml"
+
+  lint-yaml:
+    name: Lint YAML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: pip install yamllint --quiet
+
+      - name: Run yamllint
+        run: yamllint -d relaxed .
+
+  check-license-headers:
+    name: Check License Headers (stub)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: License-header check — stub
+        # STUB: passes vacuously until SHIP content is committed (Sprint 2 / F-02).
+        # Replace this step with a real header-check tool once skill/agent files land.
+        # See docs/license-header-template.txt for the required header format.
+        run: |
+          SHIP_FILES=$(find . \
+            -not -path './.git/*' \
+            -not -path './docs/*' \
+            -name '*.md' -o -name '*.yaml' -o -name '*.yml' -o -name '*.txt' \
+            2>/dev/null | grep -v './LICENSE' | grep -v './NOTICE' | \
+            grep -v './.github/' | grep -v './CONTRIBUTING.md' | \
+            grep -v './README.md' || true)
+          if [ -z "$SHIP_FILES" ]; then
+            echo "stub: no SHIP files found — license-header check skipped (OK)"
+            exit 0
+          fi
+          echo "SHIP files detected — license-header enforcement active (update this step for F-02)"
+          exit 1
