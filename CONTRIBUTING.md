@@ -65,7 +65,7 @@ Every Poesis-authored file that is part of the SHIP set (skills, agents, instruc
 prompt files, YAML configs) **must** carry the following Apache-2.0 header as the
 first lines of the file:
 
-```
+```text
 # Copyright 2026 Poesis Cloud and contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
