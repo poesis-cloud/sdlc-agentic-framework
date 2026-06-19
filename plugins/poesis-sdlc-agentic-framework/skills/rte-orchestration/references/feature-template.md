@@ -9,7 +9,9 @@ standalone engineering/operability Features, in the Feature itself). Lives at
 ---
 id: F-12
 title: <Feature title>
-status: funnel           # funnel | refined | adr-pending | ready | committed | in-progress | done | blocked
+status: funnel           # funnel | refined | arch-pending | ready | committed | in-progress | done | blocked
+type: business           # business | enabler
+enabler_type: null       # exploration | architectural | infrastructure | compliance (when type=enabler)
 parent_epic: E-01        # portfolio Epic id, or null for a standalone Feature
 epic_rationale: "<why this Feature serves the Epic, or 'standalone: <reason>'>"
 wsjf:
@@ -18,7 +20,7 @@ wsjf:
   risk_reduction: 0
   job_size: 0
   score: 0               # (UBV + TC + RR) / JS
-structurant: false       # true ⇒ requires an ADR ⇒ adr-pending
+structurant: false       # true ⇒ requires an ADR ⇒ arch-pending
 risk: medium             # low | medium | critical; set by PM before leaving funnel
 complexity: involved     # simple | involved | complex; set by PM before leaving funnel
 adrs: []                 # ADR ids referenced; empty if structurant=false
@@ -73,9 +75,9 @@ parent Epic (one Feature per product), never a single cross-product Feature.
 ## Status lifecycle (Program Kanban columns)
 
 ```text
-funnel → refined → adr-pending → ready → committed → in-progress → done
-                                              ↑ ★ ADR Gate    ↑ ★ Story Gate  ↑ ★ Feature Gate
-                        (skip adr-pending if structurant=false)
+funnel → refined → arch-pending → ready → committed → in-progress → done
+                 ↑ ★ Feature Gate  ↑ ★ Architecture Gate              ↑ ★ Demo Gate
+                        (skip arch-pending if structurant=false)
 ```
 
 Orthogonal flag: `blocked`.
@@ -85,12 +87,13 @@ Orthogonal flag: `blocked`.
 | From | To | Trigger / actor |
 | --- | --- | --- |
 | (none) | `funnel` | PM derives from an Epic (`parent_epic`) or files a standalone Feature |
-| `funnel` | `refined` | PM completes AC + WSJF |
-| `refined` | `adr-pending` | PM marks `structurant: true` |
-| `refined` | `ready` | PM marks `structurant: false` |
-| `adr-pending` | `ready` | **★ ADR Gate** ADR `accepted` |
-| `adr-pending` | `refined` | ADR `rejected` (PM revises) |
+| `funnel` | `refined` | Feature Backlog Refinement (PM completes AC + WSJF + `structurant`) |
+| `refined` | `arch-pending` | **★ Feature Gate** accept + `structurant: true` |
+| `refined` | `ready` | **★ Feature Gate** accept + `structurant: false` |
+| `refined` | `funnel` | **★ Feature Gate** reject (re-refine) |
+| `arch-pending` | `ready` | **★ Architecture Gate** ADR `accepted` |
+| `arch-pending` | `refined` | ADR `rejected` (PM revises) |
 | `ready` | `committed` | RTE at PI Planning |
 | `committed` | `in-progress` | First child Story passes the **★ Story Gate** → enters Team Kanban `ready` |
-| `in-progress` | `done` | **★ Feature Gate** Central Supervisor accepts at System Demo |
+| `in-progress` | `done` | **★ Demo Gate** Central Supervisor accepts at System Demo |
 | any | `blocked` | SM/RTE flag (orthogonal) |

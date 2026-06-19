@@ -11,9 +11,9 @@ source: portfolio/<slug>/features/
 
 # Program Kanban — <product>
 
-| funnel | refined | adr-pending | ready | committed | in-progress | done |
+| funnel | refined | arch-pending | ready | committed | in-progress | done |
 |---|---|---|---|---|---|---|
-| F-20 ... | F-12 (WSJF 8) | F-15 → ADR-003 | F-11 | F-10 (PI-M) | F-09 (3/5 stories done) | F-08 ✓ Feature Gate [72.7k tk] |
+| F-20 ... | F-12 (WSJF 8) | F-15 → ADR-003 | F-11 | F-10 (PI-M) | F-09 (3/5 stories done) | F-08 ✓ Demo Gate [72.7k tk] |
 
 ## Blocked (orthogonal)
 | Feature | Reason | Owner |
@@ -25,8 +25,8 @@ source: portfolio/<slug>/features/
 - `in-progress`: 3 (current: K)
 
 ## Gate watch
-- **★ ADR Gate pending** (ADRs awaiting Central Supervisor): ADR-003 for F-15
-- **★ Feature Gate pending** (Features awaiting demo): F-09
+- **★ Architecture Gate pending** (ADRs awaiting Central Supervisor): ADR-003 for F-15
+- **★ Demo Gate pending** (Features awaiting demo): F-09
 
 ## Cost rollup (tokens)
 | Feature | tokens_rolled | source |

@@ -57,7 +57,7 @@ If either is missing or unreadable, halt and say so — do not improvise the pai
 - **No Gate skipping; QA-before-PR** — no Story reaches the ★ PR Gate without `qa/S-NNN-signoff.md`.
 - **Owner-only, gate-atomic status transitions;** run the pre-action checklist; cite the table when you flip a status.
 - **WIP limits are hard.** Capability follows the **unit**, not the seat (Driver and Navigator of one unit share one tier).
-- **Observability stories** dispatch Driver + QA with the relevant observability skill loaded; the QA sign-off includes the skill's alignment audit with machine checks green (blocks `awaiting-pr` on failure).
+- **Observability stories** dispatch Driver + QA with the `relevant observability skill` skill loaded; the QA sign-off includes its §5b alignment audit with the INST-R7/R8 machine checks green (blocks `awaiting-pr` on failure).
 - **LLM routing is mandatory** on every dispatch — emit the routing log (see orchestration-core).
 - **One commit per Story unit**, with pair attribution + Copilot co-author trailer.
 

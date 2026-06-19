@@ -8,6 +8,8 @@ Story → Feature → Epic (there is no PRD tier). Lives at `portfolio/<slug>/sp
 id: S-101
 title: <Story title>
 status: backlog          # backlog | ready | in-progress | in-review | in-qa | awaiting-pr | done | blocked
+type: user               # user | enabler
+enabler_type: null       # exploration (spike) | architectural | infrastructure | compliance (when type=enabler)
 parent_feature: F-12
 sprint: N
 pi: M

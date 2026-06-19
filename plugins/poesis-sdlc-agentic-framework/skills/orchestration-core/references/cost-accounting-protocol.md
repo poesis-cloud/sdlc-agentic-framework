@@ -191,11 +191,11 @@ does not change).
 | Lifecycle moment (commit once) | Owner | One-shot action — fetch from the source (§3) |
 |---|---|---|
 | Story `in-qa → awaiting-pr` (execution complete) | sm-orchestrator | Fetch this Story's dev + QA dispatch tokens from the session debug logs (matched by `S-NNN`); write the Story `cost:` block once; `source: measured` (or `estimated` if logs gone) |
-| Feature `in-progress → done` (★ Feature Gate) | rte-orchestrator | Fetch the Feature's own overhead dispatches (PM / ADR / PI, matched by `F-NN`); add Σ child Story `tokens_rolled`; write the Feature `cost:` once; refresh the Program kanban cost column |
+| Feature `in-progress → done` (★ Demo Gate) | rte-orchestrator | Fetch the Feature's own overhead dispatches (PM / ADR / PI, matched by `F-NN`); add Σ child Story `tokens_rolled`; write the Feature `cost:` once; refresh the Program kanban cost column |
 | Epic `implementing → done` (outcome acceptance) | vmo-orchestrator | Fetch the Epic's own overhead dispatches (BO/EA shaping / PI / I&A, matched by `E-NN`); add Σ child Feature `tokens_rolled`; write the Epic `cost:` once; refresh the Portfolio kanban cost column |
 
 Child costs are already committed and immutable by the time a parent closes (Stories close before
-their Feature's Feature Gate; Features close before their Epic's acceptance), so each parent rollup reads
+their Feature's Demo Gate; Features close before their Epic's acceptance), so each parent rollup reads
 **committed child snapshots + a one-shot fetch of its own overhead** — never a recomputation of the
 children.
 

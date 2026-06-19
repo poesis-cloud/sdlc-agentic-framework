@@ -1,6 +1,6 @@
 ---
 name: vmo-orchestration
-description: 'Portfolio layer of the SAFe orchestration (VMO — Value Management Office / Agile Portfolio Operations, the operational arm of Lean Portfolio Management). Loaded by @vmo-orchestrator on top of the orchestration-core base. Covers Portfolio Init, ART / product registration, Strategic Themes, Epic intake + refinement (the Epic Gate), the Portfolio Kanban, Epic outcome acceptance, portfolio WSJF + Strategic Portfolio Review, portfolio-level risk, Epic cost roll-up, the Epics GitHub board, and dispatching @rte-orchestrator per ART. Use for everything above the program/ART line.'
+description: 'Portfolio layer of the SAFe orchestration (VMO — Value Management Office / Agile Portfolio Operations, the operational arm of Lean Portfolio Management). Loaded by @vmo-orchestrator on top of the orchestration-core base. Covers Portfolio Init, ART / product registration, Strategic Themes, Epic intake + refinement (the Epic Gate), the Portfolio Kanban, Epic outcome acceptance, portfolio WSJF + Strategic Portfolio Review + Portfolio Sync, portfolio-level risk, Epic cost roll-up, the Epics GitHub board, and dispatching @rte-orchestrator per ART. Use for everything above the program/ART line.'
 ---
 
 <!-- Copyright 2026 Poesis Cloud and contributors
@@ -38,18 +38,24 @@ The VMO **polices** the portfolio layer: it controls the input/output artifacts 
 
 **Single entry point**: the Central Supervisor talks to the VMO; it dispatches the bench + `@rte-orchestrator`. **Never writes production code**; is **not** the Central Supervisor, the Business Owner / Enterprise Architect (hats the human wears), the PM, the Architect, or QA.
 
-## The Flow (portfolio steps)
+## The Flow — Epic handling matrix
 
-Portfolio paths are `portfolio/`; product paths are `<P>` = `portfolio/<slug>/`. Halt only at the **★ Epic Gate**.
+The portfolio workflow **is the Epic FSM**: `funnel → reviewing → analyzing → portfolio-backlog → implementing → done` (flag `blocked`). The VMO is the **event loop** and the **only writer of Epic `status:`** — every sub-orchestration returns output, the VMO commits the transition. One matrix folds the flow, sub-orchestrations, and gates (kinds **D / Ceremony / Practice / Gate**; see orchestration-core). **Step 0:** if `portfolio/` or the product is unregistered, run **Portfolio / ART Init** (below) first.
 
-0. **Resolution / init.** Ensure `portfolio/` exists (run **Portfolio Init** if not). Read `portfolio/_registry.yaml`; if an ART an Epic targets is not registered, run **ART / Product Init** (below).
-1. **Strategic Themes.** Keep `strategic-themes.md` current (seeded from `gsm/GSM-PUBLICATION-STRATEGY.md` + the two business lines). Every Epic must trace to a Strategic Theme.
-2. **Epic intake.** With the Central Supervisor's **Business-Owner hat** (and **Enterprise-Architect hat** for the runway), capture the Epic into `portfolio/epics/E-NN-<slug>.md` (`status: funnel`). Dispatch `SE: Product Manager` (PM) to shape the Epic hypothesis + WSJF (`-> reviewing`) and `SE: Architect` to draft the EA runway + Feature seeds + target ART(s) (`-> analyzing`). No PRD is produced — the Epic carries the intent. **Challenge (mandatory):** the PM and EA hats cross-review the hypothesis, WSJF, and runway from each other's lens, with `SE: Responsible AI` / `SE: Security` on ethics/risk; surface unresolved findings in the ★ Epic Gate packet. **Publish before the gate (mandatory):** once the Epic is shaped (`analyzing`), push it to the Portfolio Epics board — `python3 portfolio/_sync/sync.py push _portfolio --apply` — and write back its `github:` block, so the Central Supervisor reviews the Epic card on GitHub *during* the ★ Epic Gate. Then persist the Epic file to the planning repo — `python3 portfolio/_sync/git-sync.py push portfolio --apply`. No Epic reaches the ★ Epic Gate without its board card.
-3. **★ Epic Gate — Epic approval.** The Business-Owner hat flips `analyzing -> portfolio-backlog` (approve) or back to `funnel` (re-shape). An Epic in `portfolio-backlog` authorizes downstream Feature work.
-4. **Dispatch to the ART.** When an Epic is in `portfolio-backlog`, **dispatch `@rte-orchestrator`** for each target ART with the Epic path; it derives Features (`parent_epic: E-NN`), runs the ★ ADR Gate / PI Planning, and executes via `@sm-orchestrator`. Flip the Epic `portfolio-backlog -> implementing` when its first child Feature enters its product's Program Kanban (rte-orchestrator notifies you).
-5. **Monitor.** Track cross-ART Epic progress and portfolio-level risk; remove portfolio-level impediments (Epic `blocked`). Program/ART execution, the ★ ADR / PR / Feature gates, and the PI Inspect & Adapt are owned by `@rte-orchestrator` — do not duplicate them here.
-6. **Epic outcome acceptance.** When `@rte-orchestrator` reports an Epic's last child Feature `done` (post System Demo / ★ Feature Gate), the **Business-Owner hat** accepts the Epic outcome (`implementing -> done`). **Commit the Epic `cost:` once**: fetch the Epic's overhead dispatches from the ecosystem debug logs (matched by `E-NN`) + Σ child Feature `tokens_rolled`; write the block once (immutable thereafter) and refresh the Portfolio Kanban cost column (cost-accounting protocol §5).
-7. **Strategic Portfolio Review (cadence).** Periodically re-rank the portfolio backlog by WSJF, revise Strategic Themes, and make pivot/persevere/stop calls on in-flight Epics (Business-Owner hat). **Pull open portfolio-scope pain points** from `portfolio/_improvement-log.md`: root-cause and triage each into a **workflow improvement** (a skill/agent/instruction/prompt/orchestrator-template change -> fill the entry's output block, mark it `resolved`) or a **product improvement** (a new Epic), or `wont-fix`. Workflow improvements never become product Epics.
+| Event (Epic reaches…) | Kind | Sub-orchestration | Gate | → vmo commits |
+|---|---|---|---|---|
+| Strategic Theme + idea | Practice·CE | **Epic Lean Business Case** (`SE:PM`·BO authors; EA / RAI / Security challenge) | — | `∅→funnel` (trace to a Theme) |
+| `funnel` valid | Practice·CE | **Epic Lean Business Case** — hypothesis + WSJF | — | `funnel→reviewing` |
+| `reviewing` valid | Practice·CE | **Architectural Vision** (`SE:Architect`·EA → Vision + NFRs + runway + Feature seeds + target ARTs) | — | `reviewing→analyzing` |
+| runway gap surfaced | Practice·CE | **Architectural Vision** → seeds an **Enabler Epic** | — | `∅→funnel` (`type: enabler`) |
+| `analyzing` *(refined · challenge done · board-published)* | **Gate** | — | **★ Epic Gate** (CS·BO) | accept→`portfolio-backlog` (**dispatch `@rte` per ART**) · reject→`funnel` (reshape) |
+| →`portfolio-backlog`, or an Epic `→done` (frees capacity) | Ceremony | **Participatory Budgeting** (BO + EA → Lean Budgets; **CS** commits) | — | budget allocation *(meta)*; funded Epics cleared |
+| Epic enter (`→funnel`) / exit (`→done`) | Ceremony | **Strategic Portfolio Review** (BO + EA → re-rank + Themes + pivot/persevere/stop) | — | WSJF re-order *(meta)*; pivot ⇒ `→funnel`/`→blocked`/`→done` |
+| first child Feature `funnel` (roll-up ← `@rte`) | D | — | — | `portfolio-backlog→implementing` |
+| last child Feature `done` (roll-up ← `@rte`) | **Gate** | — | **★ Epic Outcome Gate** (CS·BO) | accept→`done`; commit Epic `cost:` once |
+| any Epic transition / `→blocked` | Ceremony | **Portfolio Sync** (child-Feature roll-up → portfolio risk + kanban) | — | `→blocked`/unblock; escalate cross-ART risk |
+
+The VMO **facilitates** and authors only **flow/meta** artifacts; backlog re-ranking is delegated to `SE:PM`·BO, pivot/persevere/stop decisions stay with the Central Supervisor (BO hat).
 
 ## Portfolio Init procedure (step 0, run once)
 

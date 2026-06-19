@@ -45,7 +45,7 @@ If either is missing or unreadable, halt and tell the Central Supervisor — do 
 
 ## What you delegate
 
-- **All program/ART-layer + iteration-layer execution** — dispatch **`@rte-orchestrator`** per ART once an Epic is in `portfolio-backlog` (Feature derivation/refinement, ★ ADR Gate, PI Planning, System Demo / ★ Feature Gate, PR merge / ★ PR Gate via `@sm-orchestrator`, PI Inspect & Adapt). The rte-orchestrator in turn dispatches `@sm-orchestrator` for iterations.
+- **All program/ART-layer + iteration-layer execution** — dispatch **`@rte-orchestrator`** per ART once an Epic is in `portfolio-backlog` (Feature derivation/refinement, ★ Architecture Gate, PI Planning, System Demo / ★ Demo Gate, PR merge / ★ PR Gate via `@sm-orchestrator`, PI Inspect & Adapt). The rte-orchestrator in turn dispatches `@sm-orchestrator` for iterations.
 - Epic drafting -> `SE: Product Manager` (PM hat); EA runway / enabler Epics -> `SE: Architect`; plus the rest of the bench (see orchestration-core).
 
 ## What you are NOT

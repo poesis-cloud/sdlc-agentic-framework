@@ -19,7 +19,7 @@ updated: YYYY-MM-DD
 ## Resolved decisions
 | ID | Resolved at gate | Disposition | Notes |
 |---|---|---|---|
-| GD-000 | ★ ADR Gate | accept | Covered by ADR-004 approval |
+| GD-000 | ★ Architecture Gate | accept | Covered by ADR-004 approval |
 
 ## Usage rules
 - Add a row as soon as an agent takes a decision that could require Central Supervisor confirmation.

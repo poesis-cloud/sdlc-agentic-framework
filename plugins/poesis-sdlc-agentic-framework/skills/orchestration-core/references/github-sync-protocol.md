@@ -49,7 +49,7 @@ content → local wins; status → remote wins. Conflicts are always **reported*
 ## 4. Gate-crossing transitions (never auto-applied)
 
 A transition is **gate-crossing** if it enters or leaves a gate column listed in
-`gate_columns` (`adr-pending`, `awaiting-pr`) **or** targets `done` (board spec §8). `done` is
+`gate_columns` (`arch-pending`, `awaiting-pr`) **or** targets `done` (board spec §8). `done` is
 not itself a `gate_columns` entry — the `→ done` crossing is detected independently so a `done`
 item never displays as awaiting a gate.
 

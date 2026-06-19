@@ -19,7 +19,7 @@ views. The bidirectional sync toolchain (`portfolio/_sync/`) and its protocol
   is its own ART with exactly **one GitHub Project** (Program board + Team board) and **one
   planning repo**. Above them, a single cross-product **Portfolio Project** holds Epics.
 - **Gates are never automated.** The board may *display* gate-pending columns; crossing a gate
-  (Epic / ADR / PR / Feature) always requires Central Supervisor approval in chat. Sync never approves a
+  (Epic / Architecture / PR / Demo) always requires Central Supervisor approval in chat. Sync never approves a
   gate (see §8).
 - **Non-destructive.** Sync never deletes or closes items as a side effect. Removal is manual.
 
@@ -69,7 +69,7 @@ synchronized on the issue**, the sync maintains one lifecycle label per issue, n
 | Type | Label namespace | Examples |
 |---|---|---|
 | Epic | `epic:<portfolio-column>` | `epic:funnel`, `epic:analyzing`, `epic:portfolio-backlog`, `epic:implementing`, `epic:done` |
-| Feature | `feature:<program-column>` | `feature:funnel`, `feature:refined`, `feature:adr-pending`, `feature:ready`, `feature:committed`, `feature:in-progress`, `feature:done` |
+| Feature | `feature:<program-column>` | `feature:funnel`, `feature:refined`, `feature:arch-pending`, `feature:ready`, `feature:committed`, `feature:in-progress`, `feature:done` |
 | Story | `story:<team-column>` | `story:backlog`, `story:ready`, `story:in-progress`, `story:in-review`, `story:in-qa`, `story:awaiting-pr`, `story:done` |
 
 Rules:
@@ -96,7 +96,7 @@ curated board groups by its own column set without overlap, and is mirrored onto
 | Fine column (any of Portfolio/Program/Team) | built-in `Status` |
 |---|---|
 | `funnel`, `portfolio-backlog`, `backlog`, `refined`, `ready` | `Todo` |
-| every mid-flight column (`reviewing`, `analyzing`, `implementing`, `adr-pending`, `committed`, `in-progress`, `in-review`, `in-qa`, `awaiting-pr`) | `In Progress` |
+| every mid-flight column (`reviewing`, `analyzing`, `implementing`, `arch-pending`, `committed`, `in-progress`, `in-review`, `in-qa`, `awaiting-pr`) | `In Progress` |
 | `done` | `Done` |
 
 **Generic SAFe fields** — those shared across Epic/Feature/Story — are namespaced with a `SAFe `
@@ -116,7 +116,7 @@ names **cannot contain `:`**, so the namespace is a space (`SAFe Local ID`), nev
 | `SAFe WSJF` | number | `wsjf.score` | generic (Epic, Feature) | `wsjf.score` |
 | `SAFe Risk` | single-select | `low`, `medium`, `critical` | all (generic) | `risk` (optional) |
 | `SAFe Complexity` | single-select | `simple`, `involved`, `complex` | all (generic) | `complexity` (optional) |
-| `SAFe Gate` | single-select | `none`, `gate-epic`, `gate-adr`, `gate-pr`, `gate-feature` | all (generic) | derived from `status` (§8) |
+| `SAFe Gate` | single-select | `none`, `gate-epic`, `gate-architecture`, `gate-pr`, `gate-feature` | all (generic) | derived from `status` (§8) |
 | `Parent Epic` | text | `E-NN` | Feature *(type-specific)* | `parent_epic` |
 | `Parent Feature` | text | `F-NN` | Story *(type-specific)* | `parent_feature` |
 | `Strategic Theme` | text | theme id/name | Epic *(type-specific)* | `strategic_theme` |
@@ -193,7 +193,7 @@ A status transition that **crosses a gate boundary** is never auto-applied by sy
 direction. Which columns are gate-bearing is defined by the **Gate** column of the kanban tables
 in orchestration-core SKILL.md (and the Epic / ADR / Story / PR / Feature rows of its *Gates (summary)* table) — this
 spec does not re-decide it. The `SAFe Gate` project field marks only the genuinely *awaiting-gate*
-columns for the board (`analyzing → gate-epic`, `adr-pending → gate-adr`,
+columns for the board (`analyzing → gate-epic`, `arch-pending → gate-architecture`,
 `awaiting-pr → gate-pr`); a `portfolio-backlog` / `done` item has already passed its gate, so
 its `SAFe Gate` is `none`. The `→ portfolio-backlog` and `→ done` crossings are still gate-protected
 by the sync independently of the display field (protocol §4).

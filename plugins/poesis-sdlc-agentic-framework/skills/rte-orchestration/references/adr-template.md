@@ -10,13 +10,13 @@ status: proposed              # proposed | accepted | rejected | superseded
 product: <product-slug>
 parent_feature: F-12
 deciders:
-  - central-supervisor                  # ★ ADR Gate decider
+  - central-supervisor                  # ★ Architecture Gate decider
   - SE-Architect
 consulted:
   - SE-Security
   - SE-DevOps-CI
 created: YYYY-MM-DD
-decided: null                 # set on ★ ADR Gate accept/reject
+decided: null                 # set on ★ Architecture Gate accept/reject
 supersedes: null              # ADR id, if applicable
 superseded_by: null
 ---
@@ -45,6 +45,6 @@ Repos and code areas impacted (must intersect parent product's `repos[]`).
 
 ## Status lifecycle
 
-`proposed → ★ ADR Gate → accepted | rejected`. `accepted` may later flip to `superseded` by a newer ADR.
+`proposed → ★ Architecture Gate → accepted | rejected`. `accepted` may later flip to `superseded` by a newer ADR.
 
-ADR Gate transition: parent Feature flips `adr-pending → ready` on `accepted`, or back to `refined` on `rejected`.
+Architecture Gate transition: parent Feature flips `arch-pending → ready` on `accepted`, or back to `refined` on `rejected`.

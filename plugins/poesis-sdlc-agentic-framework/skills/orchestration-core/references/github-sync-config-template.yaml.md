@@ -32,16 +32,16 @@ status_fields:
   team: "Team Status"
 
 status_options:
-  program: [funnel, refined, adr-pending, ready, committed, in-progress, done]
+  program: [funnel, refined, arch-pending, ready, committed, in-progress, done]
   team:    [backlog, ready, in-progress, in-review, in-qa, awaiting-pr, done]
 
 # Columns whose entry/exit crosses a human gate (board spec §8). Only the
 # genuinely *awaiting-gate* columns are listed — they drive the `Gate` display
-# field. The `→ done` crossing (★ PR Gate / ★ Feature Gate) is gate-protected independently
+# field. The `→ done` crossing (★ PR Gate / ★ Demo Gate) is gate-protected independently
 # by the sync (protocol §4), so `done` is intentionally NOT listed here.
 gate_columns:
   program:
-    adr-pending: gate-adr
+    arch-pending: gate-architecture
   team:
     awaiting-pr: gate-pr
 

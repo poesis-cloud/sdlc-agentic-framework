@@ -1,6 +1,6 @@
 # Inspect & Adapt Template — `portfolio/<slug>/pi-M/inspect-adapt.md`
 
-Authored by RTE at the end of the PI, after the System Demo (★ Feature Gate cycle).
+Authored by RTE at the end of the PI, after the System Demo (★ Demo Gate cycle).
 
 ```markdown
 ---
@@ -18,7 +18,7 @@ attendees:
 # PI-M Inspect & Adapt — <product>
 
 ## 1. PI System Demo summary
-- Features demoed (with link to ★ Feature Gate outcome).
+- Features demoed (with link to ★ Demo Gate outcome).
 - Central Supervisor acceptance per Feature: accepted | conditionally accepted | rejected.
 
 ## 2. Quantitative metrics
@@ -28,7 +28,7 @@ attendees:
 | Stories committed → done | | | |
 | Predictability (actual/planned BV %) | | | |
 | ★ PR Gate cycle time (avg days) | | | |
-| ★ ADR Gate cycle time (avg days) | | | |
+| ★ Architecture Gate cycle time (avg days) | | | |
 | Defect escape rate (post-QA bugs) | | | |
 
 ## 3. Retrospective (problem-solving)

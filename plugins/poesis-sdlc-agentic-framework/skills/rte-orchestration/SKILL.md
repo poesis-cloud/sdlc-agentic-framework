@@ -1,6 +1,6 @@
 ---
 name: rte-orchestration
-description: 'Program / ART layer of the SAFe orchestration. Loaded by @rte-orchestrator on top of the orchestration-core base. Covers receiving an approved Epic from @vmo-orchestrator, Feature derivation + refinement, architecture runway (the ADR Gate), PI Planning, dispatching @sm-orchestrator for iteration execution, System Demo (the Feature Gate), PI Inspect & Adapt, the Program Kanban, cross-Feature risk, and ART health / state recovery. Use for everything between the portfolio line and the iteration line. Portfolio concerns (Strategic Themes, Epics, the Epic Gate, Portfolio Kanban, ART registration) belong to @vmo-orchestrator.'
+description: 'Program / ART layer of the SAFe orchestration. Loaded by @rte-orchestrator on top of the orchestration-core base. Covers receiving an approved Epic from @vmo-orchestrator, Feature derivation + refinement, architecture runway (the Architecture Gate), PI Planning, dispatching @sm-orchestrator for iteration execution, System Demo (the Demo Gate), ART Sync, PI Inspect & Adapt, the Program Kanban, cross-Feature risk, and ART health / state recovery. Use for everything between the portfolio line and the iteration line. Portfolio concerns (Strategic Themes, Epics, the Epic Gate, Portfolio Kanban, ART registration) belong to @vmo-orchestrator.'
 ---
 
 <!-- Copyright 2026 Poesis Cloud and contributors
@@ -23,31 +23,37 @@ Layer-specific procedure for **`@rte-orchestrator`**. Always load [orchestration
 
 ## What the rte-orchestrator governs (program/ART-layer police)
 
-The RTE **polices** the program layer: it controls the agents' input/output artifacts, enforces conformance to its **owned templates** + SAFe practice, and owns the **flow** (gates, Program Kanban, PI cadence). It does **not** author or own the backlog.
+The RTE **polices** the program layer: it controls the agents' input/output artifacts, enforces conformance to its **owned templates** + SAFe practice, and owns the **flow** (gates, Program Kanban, per-unit ceremony handlers). It does **not** author or own the backlog.
 
 - **Features (PM-owned)** — dispatch `SE: Product Manager` (PM hat), who **authors + refines** `<P>features/F-NN-*.md` (`parent_epic: E-NN`); rte polices template + SAFe conformance and renders the **Program Kanban** (`<P>kanban/program.md`). rte owns the program-tier templates (feature, adr, pi-objectives, risks, inspect-adapt, kanban-program).
-- **Architecture runway** — **ART Sync** (Architect participates) while ADRs are in flight; facilitate the **★ ADR Gate**.
+- **Architecture runway** — **ART Sync** (Architect participates) while ADRs are in flight; facilitate the **★ Architecture Gate**.
 - **PI Planning** — `<P>pi-M/pi-objectives.md`; flip Features `ready -> committed`; **dispatch `@sm-orchestrator`** for all iteration execution (sprint planning, story execution, pair programming, ★ PR Gate prep).
-- **System Demo** — facilitate the **★ Feature Gate**; write `<P>pi-M/inspect-adapt.md`; merge approved PRs (**★ PR Gate**, `awaiting-pr -> done`).
+- **System Demo** — facilitate the **★ Demo Gate**; write `<P>pi-M/inspect-adapt.md`; merge approved PRs (**★ PR Gate**, `awaiting-pr -> done`).
 - **ART health** — gate compliance, artifact-trace integrity (Story -> Feature -> Epic), invariant enforcement, cross-Feature/-product risk (`<P>pi-M/risks.md`); remove program-level impediments, escalate portfolio ones to `@vmo-orchestrator`.
-- **Feature cost — once, at the ★ Feature Gate** — fetch overhead from ecosystem logs + Σ child Story `tokens_rolled`; write `cost:` once; refresh kanban; **notify `@vmo-orchestrator`** for the Epic-level commit ([cost-accounting](../orchestration-core/references/cost-accounting-protocol.md)). Story cost is `@sm-orchestrator`'s at `awaiting-pr`.
+- **Feature cost — once, at the ★ Demo Gate** — fetch overhead from ecosystem logs + Σ child Story `tokens_rolled`; write `cost:` once; refresh kanban; **notify `@vmo-orchestrator`** for the Epic-level commit ([cost-accounting](../orchestration-core/references/cost-accounting-protocol.md)). Story cost is `@sm-orchestrator`'s at `awaiting-pr`.
 - **Pain points — continuous** — append program/ART friction to `portfolio/_improvement-log.md` (input block, `status: open`; no inline fix).
 
 Dispatched by `@vmo-orchestrator` for an approved Epic, or directly by the Central Supervisor; dispatches the bench + `@sm-orchestrator`. **Never writes production code**; is **not** the Central Supervisor, Architect, PM/PO, or QA.
 
-## The Flow (Step 0 + SAFe steps)
+## The Flow — Feature handling matrix
 
-Portfolio paths are `portfolio/`; product paths are `<P>` = `portfolio/<slug>/`. Halt only at the ★ gates (ADR / PR / Feature) you own.
+The program/ART workflow **is the Feature FSM**: `funnel → refined → arch-pending → ready → committed → in-progress → done` (flag `blocked`). rte is the **event loop** and the **only writer of Feature `status:`**. One matrix folds the flow, sub-orchestrations, and gates (kinds **D / Ceremony / Practice / Gate**). Each Feature carries `type: business | enabler`. Halt only at the ★ gates (Feature / Architecture / Demo / PR) you own. **Step 0:** if the product is unregistered, **escalate to `@vmo`**.
 
-0. **Resolution / init.** Identify the product via `portfolio/_registry.yaml`. If unregistered, **escalate to `@vmo-orchestrator`** (it owns the registry + Portfolio Init / ART registration) — never create `portfolio/` or mutate the registry yourself.
-1. **Receive the Epic** (`portfolio/epics/E-NN-<slug>.md`, `portfolio-backlog`) from `@vmo-orchestrator`. No PRD — the Epic carries the intent (Strategic Themes, intake, and the ★ Epic Gate already happened at the portfolio layer).
-2. **Feature derivation (PM hat)** — dispatch `SE: Product Manager` → `<P>features/F-NN-*.md` (`funnel`), each `parent_epic: E-NN` (or `null` + rationale). **Notify `@vmo-orchestrator`** to flip the Epic `portfolio-backlog -> implementing` on the first child Feature.
-3. **Feature refinement (PM hat)** — AC + WSJF → `refined`; architectural triage: structurant → `adr-pending`, else → `ready`.
-4. **Architecture runway + ★ ADR Gate** — dispatch `SE: Architect` → `<P>architecture/adr-NNN-*.md` (`proposed`). **Challenge (mandatory):** `SE: Security` + `SE: DevOps/CI` adversarially review the ADR + Feature from their lens; fold material findings into the ADR (Options/Consequences) and surface unresolved ones in the gate packet. **Publish before the gate (mandatory):** `python3 portfolio/_sync/sync.py push <slug> --apply` + `github:` write-back so the Feature card (`adr-pending`) is reviewable on GitHub *during* the gate; then `python3 portfolio/_sync/git-sync.py push <slug> --apply`. No Feature reaches the gate without its board card. On accept → Feature `adr-pending -> ready`.
-5. **PI / Iteration Planning** — write `<P>pi-M/pi-objectives.md`; flip selected Features `ready -> committed`; **dispatch `@sm-orchestrator`** to write `<P>sprint-N/plan.md` and run the iteration.
-6. **Iteration layer (Stories → execution → acceptance)** — owned by `@sm-orchestrator` (PO-hat derivation, pair micro-cycle, QA). First Story `ready` flips its parent Feature `committed -> in-progress` (rte updates the rollup); the layer ends each Story at `awaiting-pr`. rte monitors program-level health only.
-7. **★ PR Gate** — the iteration layer prepares the PR packet (QA sign-off + `SE: Security` pre-merge review attached); the Central Supervisor approves; **rte merges** (`awaiting-pr -> done` is rte-owned) and updates the parent-Feature rollup. (The Story `cost:` was already committed by `@sm-orchestrator` at `awaiting-pr`; the Feature `cost:` commits once at the ★ Feature Gate.)
-8. **★ Feature Gate — System Demo + Retro + Inspect & Adapt.** rte stages the demo; Central Supervisor accepts → Feature `in-progress -> done`; **commit the Feature `cost:` once** (overhead from ecosystem logs + Σ child Story `tokens_rolled`) and refresh the kanban. On the Epic's last child Feature `done`, **notify `@vmo-orchestrator`** for Epic outcome acceptance + Epic cost. sm writes `<P>sprint-N/retro.md`; rte writes `<P>pi-M/inspect-adapt.md`; **pull open program/ART-scope pain points** from `portfolio/_improvement-log.md` and triage each into a **workflow** improvement (skill/agent/instruction/prompt/template change → fill output block, mark `resolved`) or a **product** Feature, or `wont-fix`. Workflow improvements never become product Features.
+| Event (Feature reaches…) | Kind | Sub-orchestration | Gate | → rte commits |
+|---|---|---|---|---|
+| Epic `portfolio-backlog`+ (← `@vmo`) | Ceremony·CE | **Feature Backlog Refinement** (`SE:PM`·PM authors; Architect / dev / QA / UX / Security) → AC + WSJF + `structurant` | — | `∅→funnel` → `funnel→refined`; **notify `@vmo`** (Epic→`implementing`) |
+| `refined` *(refined)* | **Gate** | — | **★ Feature Gate** (rte-run; escalate if structurant/contested) | accept→`arch-pending` (structurant) / `ready` · reject→`funnel` (re-refine) |
+| `arch-pending` *(produce)* | Practice·CE | **Architectural Runway Extension** (`SE:Architect`·SA + Security + DevOps + dev) → ADR@`proposed` | — | *(ADR committed; stays `arch-pending`)* |
+| runway / NFR / compliance gap | Practice·CE | **Architectural Runway Extension** → seeds an **Enabler Feature** | — | `∅→funnel` (`type: enabler`) |
+| `arch-pending` *(ADR decided · challenge done · board-published)* | **Gate** | — | **★ Architecture Gate** (CS) | accept→`ready` · reject→ADR `rejected`, Feature→`refined` |
+| `ready` **and** `depends_on` met | Ceremony | **PI Planning** (→ `pi-objectives.md` + `risks.md`) | — | `ready→committed`; **dispatch `@sm`** |
+| first child Story `ready` (roll-up ← `@sm`) | D | — | — | `committed→in-progress` |
+| child Stories **all `done`** | Ceremony | **System Demo** (stages the increment for the CS) | **★ Demo Gate** (CS) | accept→`in-progress→done`; commit Feature `cost:` once; **notify `@vmo`** |
+| Story `awaiting-pr` (rte-owned merge) | **Gate** | — | **★ PR Gate** (CS) | Story `awaiting-pr→done` (**rte merges**); roll-up to Feature |
+| any Feature transition / `→blocked` / ADR in flight | Ceremony | **ART Sync** (deps + risk + runway → `risks.md` + kanban) | — | `→blocked`/unblock |
+| `done` *(synthesise at an Epic's completion)* | Ceremony | **Inspect & Adapt** (→ `inspect-adapt.md`) | — | triage program pain points; enabler gaps ⇒ seed Feature `∅→funnel` |
+
+rte **facilitates** and authors only **flow/meta** artifacts (pi-objectives, risks, inspect-adapt, kanban); Features / ADRs stay delegated; the human ★ gates (Architecture / Demo / PR) stay with the Central Supervisor.
 
 ## Product registration (escalate to VMO)
 
@@ -55,7 +61,7 @@ Product / ART registration is owned by **`@vmo-orchestrator`** — it is the onl
 
 ## Program Kanban ownership
 
-The rte-orchestrator renders `<P>kanban/program.md` from Feature frontmatter after every Feature status flip. It owns the `ready`, `committed`, and `blocked` (program) transitions and the `awaiting-pr -> done` merge; PM owns `funnel`/`refined`; `SE: Architect` owns `adr-pending`; the Central Supervisor owns the ★ ADR / Feature gate transitions. The **Portfolio Kanban** (`portfolio/kanban/portfolio.md`, Epic frontmatter) is owned by `@vmo-orchestrator`; rte-orchestrator only **notifies** it of Epic-affecting events (first child Feature in `funnel` -> `implementing`; last child Feature `done` -> outcome acceptance). See orchestration-core for the full tables.
+The rte-orchestrator renders `<P>kanban/program.md` from Feature frontmatter after every Feature status flip. It owns the `ready`, `committed`, and `blocked` (program) transitions and the `awaiting-pr -> done` merge; PM owns `funnel`/`refined`; `SE: Architect` owns `arch-pending`; the Central Supervisor owns the ★ Architecture / Demo gate transitions. The **Portfolio Kanban** (`portfolio/kanban/portfolio.md`, Epic frontmatter) is owned by `@vmo-orchestrator`; rte-orchestrator only **notifies** it of Epic-affecting events (first child Feature in `funnel` -> `implementing`; last child Feature `done` -> outcome acceptance). See orchestration-core for the full tables.
 
 ## PM vs PO when dispatching `SE: Product Manager`
 
@@ -68,5 +74,5 @@ When the Central Supervisor (or `@vmo-orchestrator`) says "recover state":
 2. Read the relevant Epics read-only from `portfolio/epics/` (statuses, which are `implementing`); for each product read `product.yaml`, then `features/`, `architecture/`, `pi-*/`, `sprint-N/`. Portfolio recovery (Epic lifecycle, Portfolio Kanban) is owned by `@vmo-orchestrator`.
 3. Re-render `<P>kanban/program.md` and `<P>kanban/team-sprint-N.md` from frontmatter.
 4. For each repo in `product.yaml > repos[]`, run `gh pr list` and `gh issue list`.
-5. Report per product: current PI/Sprint, in-flight Stories, open ADRs (★ ADR Gate), Stories in `in-qa`/`awaiting-pr`, open PRs (★ PR Gate), Features awaiting the ★ Feature Gate, next action.
+5. Report per product: current PI/Sprint, in-flight Stories, open ADRs (★ Architecture Gate), Stories in `in-qa`/`awaiting-pr`, open PRs (★ PR Gate), Features awaiting the ★ Demo Gate, next action.
 6. Wait for Central Supervisor confirmation before dispatching.

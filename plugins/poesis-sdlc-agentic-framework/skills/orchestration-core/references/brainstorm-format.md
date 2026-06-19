@@ -74,7 +74,7 @@ Before starting a sprint, validate the plan:
 @rte-orchestrator — Run a consilium on docs/sprint-N/plan.md.
 Dispatch each relevant specialist to review from their lens:
   - SE: Product Manager: do the Stories trace to a ranked Feature?
-  - SE: Architect: are all dependent ADRs accepted (★ ADR Gate clean)?
+  - SE: Architect: are all dependent ADRs accepted (★ Architecture Gate clean)?
   - SE: Security: any Story crossing a trust boundary without
                   SE: Security on the pair?
   - SE: DevOps/CI: any Story that needs a CI / Helm change not scoped

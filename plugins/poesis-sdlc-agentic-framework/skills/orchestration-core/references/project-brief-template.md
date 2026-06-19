@@ -72,7 +72,7 @@ Copy this template to your project root and fill in every section. **Do not abbr
 | Docs | `SE: Tech Writer` | Story-attached docs, ADR prose, release notes |
 | UX | `SE: UX Designer` | UX journeys, Figma specs |
 | RAI / Accessibility | `SE: Responsible AI` | Accessibility Enablers, bias review |
-| Business Owner / Approver | **You** (human) | Submits + approves Epics at the ★ Epic Gate; approves ADRs / PRs / System Demo at the ★ ADR / ★ PR / ★ Feature gates |
+| Business Owner / Approver | **You** (human) | Submits + approves Epics at the ★ Epic Gate; approves ADRs / PRs / System Demo at the ★ Architecture / ★ PR / ★ Demo gates |
 
 ## 7. Sprint Status
 
@@ -118,7 +118,7 @@ When the RTE chat overflows or restarts, the human says **`@rte-orchestrator —
 1. Reads `PROJECT_BRIEF.md`.
 2. Reads `docs/portfolio/`, `docs/features/`, `docs/architecture/` (latest ADRs), `docs/pi-*/` (current PI), `docs/sprint-N/` (current sprint).
 3. Runs `gh pr list` and `gh issue list`.
-4. Reports current PI, current Sprint, in-flight Stories, open ADRs awaiting the ★ ADR Gate, open PRs awaiting the ★ PR Gate, next action.
+4. Reports current PI, current Sprint, in-flight Stories, open ADRs awaiting the ★ Architecture Gate, open PRs awaiting the ★ PR Gate, next action.
 5. Waits for human confirmation before dispatching.
 
 Every sprint, before the RTE chat closes:

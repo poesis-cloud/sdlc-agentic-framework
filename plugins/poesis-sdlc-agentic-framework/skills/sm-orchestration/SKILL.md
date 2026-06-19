@@ -36,25 +36,39 @@ The SM **polices** the iteration layer: it controls the agents' input/output art
 
 Dispatched by `@rte-orchestrator` at PI/Iteration Planning, or directly by the Central Supervisor; hands the Story to the Central Supervisor at the **★ PR Gate** and back to `@rte-orchestrator` for merge. **Facilitates; never decides scope; never writes production code.**
 
-## Iteration flow
+## Iteration flow — Story handling matrix
 
-1. **Iteration Planning** — receive committed Features from rte-orchestrator; write `<P>sprint-N/plan.md`; verify each Story's `risk`/`complexity`; assign Driver/Navigator.
-2. **Story derivation + ★ Story Gate (PO hat)** — dispatch `SE: Product Manager` as PO (prefix `Acting as PO, …`) -> `<P>sprint-N/stories/S-NNN.md` (`status: backlog`). PO grooms the Story to DoR, then SM runs the **★ Story Gate** (Definition-of-Ready check) before flipping `backlog -> ready`:
+The iteration workflow **is the Story FSM**: `backlog → ready → in-progress → in-review → in-qa → awaiting-pr → done` (flag `blocked`). sm is the **event loop** and the **only writer of Story `status:`**. One matrix folds the flow, sub-orchestrations, and gates (kinds **D / Ceremony / Practice / Gate**). The pair micro-cycle and verification are **CI practices** (multi-agent sub-orchestrations), not solo work.
 
-   | DoR check | Must hold |
-   |---|---|
-   | ID + title + parent Feature | present |
-   | Acceptance criteria | unambiguous and testable (no "should/may") |
-   | Parent Feature is `committed` or `in-progress` | verified in Feature frontmatter |
-   | No unresolved upstream Story blockers | confirmed |
-   | Repos in scope identified | from `product.yaml > repos[]` |
-   | Driver/Navigator pair assigned | SM assigns before `ready` |
+| Event (Story reaches…) | Kind | Sub-orchestration | Gate | → sm commits |
+|---|---|---|---|---|
+| Feature `committed` (← `@rte`) | Ceremony | **Iteration Planning** (sm + `SE:PM`·PO derives → Stories + pairs + `plan.md`) | — | `∅→backlog` |
+| `backlog` not DoR-ready | Ceremony·CE | **Story Backlog Refinement** (`SE:PM`·PO grooms) | — | — *(stays `backlog`)* |
+| unknown / spike surfaced | Ceremony·CE | **Story Backlog Refinement** → seeds an **Enabler Story (spike)** | — | `∅→backlog` (`type: enabler`) |
+| `backlog` *(DoR holds — checklist below)* | **Gate** | — | **★ Story Gate** (sm-run DoR) | accept→`ready` (assign Driver+Navigator; first `ready` ⇒ **notify `@rte`**, Feature `→in-progress`) · reject→stay `backlog` |
+| `ready` + pair free | Practice·CI | **Pair micro-cycle** — Driver · DRIVE (+ tests) | — | `ready→in-progress` |
+| one unit committed | Practice·CI | **Pair micro-cycle** — Navigator · CRITIQUE | — | `in-progress→in-review` |
+| CRITIQUE accept (WIP `in-qa`≤2) | D | — | — | `in-review→in-qa` |
+| CRITIQUE reject | D | — | — | `in-review→in-progress` (log a SWAP) |
+| DoD ok · `SE:Security` verdict | Practice·CI | **Verification & Sign-off** (`ai-team-qa` + `SE:Security`) → `qa-signoff` | — | `in-qa→awaiting-pr`; commit Story `cost:` once; publish board |
+| DoD fail | D | — | — | `in-qa→in-progress` (bug report) |
+| `awaiting-pr` *(board-published · QA + Security attached)* | **Gate** | — | **★ PR Gate** (CS) | *(rte merges `awaiting-pr→done`; roll-up to Feature)* |
+| any Story transition / `→blocked` | Ceremony | **Daily Sync** (blockers + WIP → `daily-DD.md` + `progress.md`) | — | `→blocked`/unblock |
+| `→awaiting-pr` / `done` | Ceremony | **Iteration Review** (increment → CS + stakeholders) | — | — *(feedback ⇒ backlog items)* |
+| `→done` | Ceremony | **Retrospective** (→ `retro.md`; triage sprint pain points) | — | — *(escalate program-scope → Inspect & Adapt)* |
 
-   If any check fails the Story stays `backlog`; SM documents the gap and iterates with the PO before re-running the gate. On all checks pass: Story → `ready`. **Notify rte-orchestrator** to flip the parent Feature `committed -> in-progress` (first Story to pass DoR triggers this).
-3. **Execution** — run the pair micro-cycle (below): DRIVE (`in-progress`) -> CRITIQUE (`in-review`) -> ACCEPT/REJECT -> SWAP. Hold Daily Sync; remove blockers; update `progress.md`. (No per-dispatch cost bookkeeping — token usage is read from the ecosystem debug logs later, once, at Story close.)
-4. **Acceptance** — Story `in-review -> in-qa`; dispatch `ai-team-qa` -> `<P>sprint-N/qa/S-NNN-signoff.md`. PO confirms AC. On pass -> `awaiting-pr`; on fail -> back to `in-progress` with bug report. On `-> awaiting-pr`, **commit the Story `cost:` once** by fetching its dev + QA dispatch tokens directly from the session debug logs (cost-accounting protocol §5).
-5. **★ PR Gate packet** — **challenge (mandatory):** `SE: Security` reviews the diff pre-merge (trust boundaries, secrets, authz/authn); attach its verdict alongside the QA sign-off. **Publish before the gate (mandatory):** push the Story to the product Team board — `python3 portfolio/_sync/sync.py push <slug> --apply` — and write back its `github:` block, so the Central Supervisor reviews the Story card (at `awaiting-pr`) on GitHub *during* the gate. Then persist the Story file — `python3 portfolio/_sync/git-sync.py push <slug> --apply`. Then open the PR in the relevant code repo (from `product.yaml > repos[]`), attach the QA sign-off and any `gate-decisions.md` entries, and present to the Central Supervisor. No Story reaches the ★ PR Gate without its board card. **rte-orchestrator merges** on approval.
-6. **Retro** — at iteration close, write `<P>sprint-N/retro.md` (include the mandatory Central Supervisor input section). **Pull open sprint-scope pain points** from `portfolio/_improvement-log.md` as retro input: root-cause each, resolve iteration-local ones into a meta-artifact improvement (fill the entry's output block, mark it `resolved`), and feed program/ART-scope ones up to the PI Inspect & Adapt.
+**★ Story Gate — Definition of Ready (all must hold):**
+
+| DoR check | Must hold |
+|---|---|
+| ID + title + parent Feature | present |
+| Acceptance criteria | unambiguous and testable (no "should/may") |
+| Parent Feature is `committed` or `in-progress` | verified in Feature frontmatter |
+| No unresolved upstream Story blockers | confirmed |
+| Repos in scope identified | from `product.yaml > repos[]` |
+| Driver/Navigator pair assigned | SM assigns before `ready` |
+
+The **pair micro-cycle** (HUDDLE → DRIVE → CRITIQUE → ACCEPT/REJECT → SWAP) and **Verification & Sign-off** are the iteration's **CI practices** — multi-agent sub-orchestrations, detailed in **Pair Programming** below. All sub-orchestrations are listed in the handling matrix above; sm **facilitates** and authors only **flow/meta** artifacts (plan, daily, progress, retro), Story authoring stays with `SE:PM`·PO, and the ★ gates stay with the Central Supervisor.
 
 ## Team Kanban ownership
 
@@ -111,4 +125,4 @@ Story `in-progress`: 1 per pair. Story `in-qa`: 2. Reject any new pull that brea
 
 ## Anti-patterns
 
-See [orchestration-core references/anti-patterns.md](../orchestration-core/references/anti-patterns.md).
+See [anti-patterns.md](../orchestration-core/references/anti-patterns.md).

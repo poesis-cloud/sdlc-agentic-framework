@@ -34,12 +34,88 @@ It carries everything **common** to all three. Layer-specific flow lives in the 
   - **Enterprise Architect hat** — owns the cross-product architectural runway / NFR backbone at the Epic level; seeds enabler Epics. **Default authoring agent: `SE: Architect` (EA hat).**
 - **The three orchestrators are the *police* of their layer — not artifact owners.** Each **governs** its layer: it controls the **input/output artifacts** of the agents it dispatches, enforces conformance to the **reference templates it owns** and to **SAFe standard practice**, and owns the **flow** (gates, kanban transitions, WIP). It **never authors or owns a backlog artifact** — those belong to the hat-wearing author (**BO → Epic, PM → Feature, PO → Story**) — and **never writes production code**.
   - **vmo-orchestrator** — portfolio layer. Polices Strategic Themes + Epics + the ★ Epic Gate; owns the **portfolio templates**; dispatches `SE: Product Manager` (BO hat) to author, and rte-orchestrator per ART. **Single entry point.**
-  - **rte-orchestrator** — program / ART layer. Polices Features + ADRs + the ★ ADR / Feature gates; owns the **program templates**; dispatches `SE: Product Manager` (PM hat) + `SE: Architect`, and sm-orchestrator for iterations.
+  - **rte-orchestrator** — program / ART layer. Polices Features + ADRs + the ★ Feature / Architecture / Demo gates; owns the **program templates**; dispatches `SE: Product Manager` (PM hat) + `SE: Architect`, and sm-orchestrator for iterations.
   - **sm-orchestrator** — iteration layer. Polices Stories + the ★ Story / PR gates; owns the **iteration templates**; dispatches `SE: Product Manager` (PO hat) + the dev/QA pair.
 - **Backlog authoring is one agent across three hats.** `SE: Product Manager` is the **default agent for the Business-Owner, PM, and PO hats** — it authors Epics + Strategic Themes (BO hat), Features (PM hat), and Stories (PO hat). Always **name the hat in the dispatch prefix** (`Acting as BO/PM/PO, …`).
 - **The Bench** — the specialist subagents the orchestrators dispatch (table below).
 
 > **No PRD tier.** This methodology has no Product Requirements Document. The defining intent that a PRD used to carry lives in the **Epic** (its hypothesis statement + outcome indicators) and cascades to Features and Stories. The backlog spine is **Strategic Theme → Epic → Feature → Story**.
+
+## Workflow model — artifact state machines + the event loop
+
+Every layer's flow is one **artifact state machine** driven by an **event loop**. The two readings below describe the same machine.
+
+**Procedural reading (the step matrix).** A workflow is a sequence of steps; each step is `INPUT (artifact@template) → AGENT·hat → OUTPUT (artifact@template)`. The orchestrator is the **bus**: between every step it runs `VALIDATE → ROUTE`, and never authors the artifact itself — it *works the flow, not the artifact*. A **human step** is a ★ Gate whose output is a decision (`accept` / `rework` / `defer`). Every Input/Output **conforms to its reference template** (catalog below); every routing edge respects the **gates**, **WIP limits**, and **owner-only transitions**.
+
+**Reactive dual (the canonical reading).** Each artifact (Epic / Feature / Story) is a **finite state machine** — its states are the kanban columns, its edges are status transitions. A transition is at once the **OUTPUT** of one step and the **EVENT** that triggers the next, so the two readings are one machine. The orchestrator is the **event loop**: observe a transition → run the **guard** → execute the **handler** → commit the new `status:` (which emits the next event).
+
+- **Event** = a transition `X → Y`, or a **roll-up** (a child's transition fires a parent's): first child Feature `funnel` ⇒ Epic `→implementing`; last child Feature `done` ⇒ Epic `→done`; first child Story `ready` ⇒ Feature `→in-progress`; Story `done` rolls up to its Feature.
+- **Guard** = VALIDATE, folded: `template-valid(output) ∧ gate-ok (★) ∧ challenge-done ∧ WIP-ok ∧ owner-correct`. Fail ⇒ rework or block. A **★ gate guard is a human halt** — never auto-fired (a board move across a gate is a *request*, not the decision).
+- **Handler** = the step body `INPUT → AGENT·hat → OUTPUT` (the matrix row).
+- **Emits** = the new status + any roll-up event.
+
+State lives only in `status:` frontmatter; **the git history of those flips is the event log** — the system is effectively event-sourced, so *recover state* = read current states and resume. This is **semantics, not infrastructure**: one synchronous chat, no queues; gates stay blocking. Each layer skill therefore states its flow as an **event-handler table** (`Event | Guard | Handler (input → agent·hat → output) | Emits/roll-up`) — the single table that folds the kanban transition table, the gates, the peer-challenge, and the WIP limits together.
+
+### One event source: a unit's state (the orchestrator streams units)
+
+There is **one event source — a unit's `status:`** (Epic / Feature / Story). The orchestrator is a **per-unit streamer**: it advances **one unit at a time** — pick a unit, evaluate the handlers whose trigger-predicate that unit satisfies, fire one, commit the new status, move to the next unit. Divide & conquer; never "gather a cohort," never wait on a clock (agentic has no wall clock and no fixed capacity, so batch windows are undefinable).
+
+A handler's **trigger** is a predicate on a **single unit** — its own state, its own children's states, and its own `depends_on`. Its **scope** is that unit (reading parent/sibling context read-only where needed). **Single-actuator invariant: only the orchestrator writes `status:`** — every other actor produces *output* that the orchestrator then commits. Four per-unit **handling** kinds:
+
+- **direct (D)** — the orchestrator commits the transition itself: mechanical edges, roll-ups, loop edges. No agents.
+- **ceremony** — a **sub-orchestration** that is a SAFe **event** (cadence/milestone): a facilitated multi-participant exchange producing output, returned to the orchestrator.
+- **practice** — a **sub-orchestration** that is a SAFe **practice** (continuous collaboration, *not* a formal event): same shape, multi-participant, peer-challenged. **Practices replace all solo authoring — no task is ever a single agent.**
+- **gate (★)** — a verdict (human, or orchestrator-run for the Story / Feature DoR gates) → the orchestrator commits *proceed* or *re-iterate*.
+
+Ceremony and practice are mechanically identical (facilitated, ≥2 participants, `input → output`, return-to-orchestrator); the label only marks *SAFe event vs SAFe practice*. The **Continuous Delivery Pipeline (CDP)** classifies the practices: **Continuous Exploration (CE)** → **Continuous Integration (CI)** → **Continuous Deployment (CD)** → **Release on Demand (RoD)** — CE groups the definition / architecture / refinement work, CI the build + verify (pair + verification), CD the merge + deploy, RoD is **N/A** (no production release modeled).
+
+What batch SAFe bought, per-unit covers without a clock: **cross-Feature coordination** → `depends_on` guards on `ready→committed` (a unit waits for its deps); **capacity** → **WIP limits** (per-unit flow control); **collective retrospection** → per-unit captures accumulate in the *workflow-improvement ledger* (below), synthesised by a ledger-review that is itself per-unit-triggered (e.g. on Epic `done`). Only **re-ranking** reads the whole set — but it is **triggered by a single Epic's** enter/exit, so it too is per-unit. Each layer therefore states its flow as **one handling matrix** — `Event | Handling (D / Ceremony / Practice / Gate) | Sub-orchestration | Gate | → status commit (orchestrator-only)` — folding the kanban transitions, the gates, the sub-orchestrations, and WIP together.
+
+### Handlers & ceremonies as loadable skills (the router/handler split)
+
+The orchestration skills are the **router**; each handler's **body** is a separate **loadable skill** (`safe-*`). The event-handler tables are the dispatch registry; the **skill registry** below binds each row to the skill that executes it. The orchestrator stays thin (index + gates + kanban + routing); depth lives one level down, loaded **on demand** (progressive disclosure). This is the command-bus / handler-registry pattern: orchestrator = bus, table = registry, each row's body = a skill.
+
+Three skill families split the handler bodies:
+
+- **Author skills** — `safe-<role>`, one per SAFe authoring hat (BO / PM / PO / EA / SA). Loaded by the **dispatched SE agent** that authors **inside a ceremony or practice**. Each is **input-keyed**: a small entry table maps *the requested output-state* → the right authoring procedure (authoring depth lives **inside** the role skill — no per-transition skill explosion).
+- **Ceremony skills** — `safe-<ceremony>`, one per SAFe **event**. Loaded by the **orchestrator** to facilitate the sub-orchestration when a unit reaches its condition.
+- **Practice skills** — `safe-<practice>`, one per SAFe **practice**. Loaded by the **orchestrator** to facilitate a continuous-collaboration sub-orchestration (no solo authoring).
+
+**Load mechanism (explicit, not auto-trigger).** Description auto-match is unreliable for *dispatched* subagents, so the dispatch prompt **names the skill + path + handler**: e.g. `Acting as PM — load skills/safe-product-manager, execute handler "Feature@funnel"`. An orchestrator loads its own ceremony skill before facilitating a ceremony.
+
+**Guard rails travel into every `safe-*` skill** (they do not relax the model): never decide a ★ gate (the Central Supervisor decides); **consume** the orchestrator-owned templates from `references/`, never restate them (one source of truth); obey the blackboard contract (read committed input artifact(s) → commit the output artifact). Name them `safe-*` to avoid collision with the Poesis `product-manager` skill and the `bmad-*` family.
+
+**Ceremonies and practices are facilitated sub-orchestrations.** Neither is solo work: each names its **Participants** (≥2, drawn from **the Bench** below) and an **Exchange** table that sequences their turns in the same `input → agent·hat → output` shape as the handlings: `# | participant·hat | contributes (reads → produces) | hands to`. The orchestrator is the **facilitator**: it opens the sub-orchestration, sequences the turns, and validates each output, but **authors nothing** — and is the **only writer of `status:`**, committing the unit's transition only after the sub-orchestration returns. Every participant authors only its own contribution per its role skill / bench role. The **Central Supervisor** joins only where a ★ gate or a pivot decision applies. Pick the participant roster systematically from the Bench (dev, QA, UX, Security, DevOps, Architect, RAI, …), not just the owning hat.
+
+**Skill registry.** Each handling names the skill that is its body — grouped by family (Ceremony / Practice are the orchestrator-facilitated sub-orchestrations; Author bodies load *inside* them):
+
+| Sub-orchestration / handling | Loaded by | Skill | Family |
+|---|---|---|---|
+| Strategic Portfolio Review | `@vmo-orchestrator` | `safe-strategic-portfolio-review` | Ceremony |
+| Participatory Budgeting | `@vmo-orchestrator` | `safe-participatory-budgeting` | Ceremony |
+| Portfolio Sync | `@vmo-orchestrator` | `safe-portfolio-sync` | Ceremony |
+| Epic Lean Business Case | `@vmo-orchestrator` | `safe-epic-lean-business-case` | Practice·CE |
+| Architectural Vision | `@vmo-orchestrator` | `safe-architectural-vision` | Practice·CE |
+| Feature Backlog Refinement | `@rte-orchestrator` | `safe-feature-backlog-refinement` | Ceremony·CE |
+| PI Planning | `@rte-orchestrator` | `safe-pi-planning` | Ceremony |
+| System Demo (stages the ★ Demo Gate) | `@rte-orchestrator` | `safe-system-demo` | Ceremony |
+| ART Sync | `@rte-orchestrator` | `safe-art-sync` | Ceremony |
+| Inspect & Adapt | `@rte-orchestrator` | `safe-inspect-and-adapt` | Ceremony |
+| Architectural Runway Extension | `@rte-orchestrator` | `safe-architectural-runway-extension` | Practice·CE |
+| Iteration Planning | `@sm-orchestrator` | `safe-iteration-planning` | Ceremony |
+| Story Backlog Refinement | `@sm-orchestrator` | `safe-story-backlog-refinement` | Ceremony·CE |
+| Daily Sync | `@sm-orchestrator` | `safe-daily-sync` | Ceremony |
+| Iteration Review | `@sm-orchestrator` | `safe-iteration-review` | Ceremony |
+| Retrospective | `@sm-orchestrator` | `safe-retrospective` | Ceremony |
+| Pair micro-cycle (Driver / Navigator / Security) | `@sm-orchestrator` | `safe-pair-programming` | Practice·CI |
+| Verification & Sign-off (QA + Security) | `@sm-orchestrator` | `safe-verification` | Practice·CI |
+| — BO hat (Epic authoring) | dispatched `SE:PM`·BO | `safe-business-owner` | Author |
+| — EA hat (Vision / runway) | dispatched `SE:Architect`·EA | `safe-enterprise-architect` | Author |
+| — PM hat (Feature authoring) | dispatched `SE:PM`·PM | `safe-product-manager` | Author |
+| — SA hat (ADR / runway extension) | dispatched `SE:Architect`·SA | `safe-system-architect` | Author |
+| — PO hat (Story authoring) | dispatched `SE:PM`·PO | `safe-product-owner` | Author |
+
+The **★ gates** carry no skill — they are the Central Supervisor's decision, **except** the two orchestrator-run definition gates: the **★ Story Gate** (DoR, `@sm` inside `safe-iteration-planning`) and the **★ Feature Gate** (Feature-DoR, `@rte` after `safe-feature-backlog-refinement`), which escalate to the human only when contested / structurant.
 
 ## Product workspace (poesis-level)
 
@@ -122,7 +198,7 @@ Both orchestrators MUST set the `model` argument on `runSubagent` by running the
 model_score = sum(capability_scores[tag] for each required tag) - (cost_rank * cost_penalty)
 ```
 
-Mark a task **critical** if any hold: security boundaries / authn-authz / secrets / crypto / tenant isolation; architecture-runway / ADR-impacting; production incident / data-loss / migration logic; disputed gate evidence (★ ADR / PR / Feature gates). Mark **medium** for normal feature work, refactors, Feature/Story refinement. Else **low**.
+Mark a task **critical** if any hold: security boundaries / authn-authz / secrets / crypto / tenant isolation; architecture-runway / ADR-impacting; production incident / data-loss / migration logic; disputed gate evidence (★ Architecture / PR / Demo gates). Mark **medium** for normal feature work, refactors, Feature/Story refinement. Else **low**.
 
 Complexity: `simple` (single file, known pattern), `involved` (2-5 files, multiple ACs, some design), `complex` (cross-repo/layer, >5 files, ambiguous design, migrations, concurrency, large context).
 
@@ -177,7 +253,7 @@ the named blackboard paths already do — so the log self-attributes. Each `cost
 from those logs **once**, at the artifact's terminal status, per the [cost-accounting protocol](./references/cost-accounting-protocol.md):
 
 - **Story** `→ awaiting-pr`: `@sm-orchestrator` sums the Story's dev + QA dispatch tokens from the logs.
-- **Feature** `→ done` (★ Feature Gate): `@rte-orchestrator` fetches Feature overhead + Σ child Stories.
+- **Feature** `→ done` (★ Demo Gate): `@rte-orchestrator` fetches Feature overhead + Σ child Stories.
 - **Epic** `→ done`: `@vmo-orchestrator` fetches Epic overhead + Σ child Features.
 
 The snapshot is `source: measured` when the logs are present, `estimated` only if they are gone; it is
@@ -214,21 +290,21 @@ For every transition you MUST:
 | **analyzing** | Central Supervisor (EA hat) | Runway draft; products + Feature seeds (`SE: Architect` assists) | — |
 | **portfolio-backlog** | Central Supervisor (BO hat) | Epic approval | **★ Epic Gate** |
 | **implementing** | vmo-orchestrator | First child Feature enters its product Program Kanban (rte-orchestrator notifies) | — |
-| **done** | Central Supervisor (BO hat) | Epic outcome accepted (vmo-orchestrator facilitates after the ART's last child Feature is `done`) | — |
+| **done** | Central Supervisor (BO hat) | Epic outcome accepted (vmo-orchestrator facilitates after the ART's last child Feature is `done`) | **★ Epic Outcome Gate** |
 | **blocked** *(flag)* | vmo-orchestrator | Portfolio-level impediment removal | — |
 
 ### Program Kanban — Features (rte-orchestrator drives; PM-owned overall)
-`funnel -> refined -> adr-pending -> ready -> committed -> in-progress -> done`. Flag: `blocked`.
+`funnel -> refined -> arch-pending -> ready -> committed -> in-progress -> done`. Flag: `blocked`. Each Feature carries `type: business | enabler`.
 
 | Column | Owner | Processing instance | Gate |
 |---|---|---|---|
 | **funnel** | `SE: Product Manager` (PM) | Feature derivation from an Epic (or standalone) | — |
-| **refined** | `SE: Product Manager` (PM) | AC + WSJF + `structurant` flag | — |
-| **adr-pending** | `SE: Architect` | Architecture runway | **★ ADR Gate** |
+| **refined** | `SE: Product Manager` (PM) | AC + WSJF + `structurant` flag | **★ Feature Gate** |
+| **arch-pending** | `SE: Architect` | Architecture runway | **★ Architecture Gate** |
 | **ready** | rte-orchestrator | PI Planning intake | — |
 | **committed** | rte-orchestrator | PI commit + Iteration Planning handoff | — |
 | **in-progress** | sm-orchestrator | Iteration execution rollup | — |
-| **done** | Central Supervisor | System Demo + acceptance | **★ Feature Gate** |
+| **done** | Central Supervisor | System Demo + acceptance | **★ Demo Gate** |
 | **blocked** *(flag)* | rte-orchestrator | Program-level impediment removal | — |
 
 ### Team Kanban — Stories (sm-orchestrator drives; PO-owned overall, sprint-scoped)
@@ -246,17 +322,32 @@ For every transition you MUST:
 | **blocked** *(flag)* | sm-orchestrator | Iteration impediment removal | — |
 
 ### Gates (summary)
-Every gate is named for the **artifact it validates** (no numbering). There are exactly five:
+Each unit gets a **definition gate** (post-refine; reject ⇒ re-iterate refinement) and an **outcome gate** (post-build); plus the cross-cutting **Architecture Gate** for structurant Features. There are seven:
 
-| Gate | Validates | Transition | Owner |
-|---|---|---|---|
-| ★ Epic Gate | Epic | Epic `analyzing -> portfolio-backlog` | Central Supervisor (BO hat) |
-| ★ ADR Gate | ADR | Feature `adr-pending -> ready` | Central Supervisor |
-| ★ Story Gate | Story (DoR) | Story `backlog -> ready` | sm-orchestrator |
-| ★ PR Gate | PR | Story `awaiting-pr -> done` | Central Supervisor |
-| ★ Feature Gate | Feature | Feature `in-progress -> done` (System Demo) | Central Supervisor |
+| ★ Gate | Class | Validates | Transition | Owner | Reject → |
+|---|---|---|---|---|---|
+| ★ Epic Gate | definition | Epic (shaped + runway) | Epic `analyzing -> portfolio-backlog` | Central Supervisor (BO) | `funnel` (reshape) |
+| ★ Feature Gate | definition | Feature (AC + WSJF + structurant) | Feature `refined -> arch-pending` / `ready` | rte-orchestrator (escalates if structurant / contested) | `funnel` (re-refine) |
+| ★ Story Gate | definition | Story (DoR) | Story `backlog -> ready` | sm-orchestrator | stay `backlog` (re-groom) |
+| ★ Architecture Gate | architecture | ADR / runway extension | Feature `arch-pending -> ready` | Central Supervisor | `refined` (re-decide) |
+| ★ Demo Gate | outcome | Feature increment | Feature `in-progress -> done` (System Demo) | Central Supervisor | rework |
+| ★ PR Gate | outcome | PR / code | Story `awaiting-pr -> done` | Central Supervisor | rework |
+| ★ Epic Outcome Gate | outcome | Epic outcomes | Epic `implementing -> done` | Central Supervisor (BO) | rework |
 
-> Four are **Central Supervisor human-approval** gates — **Epic**, **ADR**, **PR**, and **Feature** (the System Demo acceptance). The **Story Gate** is the orchestrator-run **Definition-of-Ready** check owned by `@sm-orchestrator` (`backlog -> ready`); it gates a Story into the pair-programming flow rather than requiring a human sign-off. There is **no PRD gate** — the PRD tier is removed; an Epic entering `portfolio-backlog` is what authorizes downstream Feature work.
+> **Human-approval** gates: Epic, Architecture, Demo, PR, Epic Outcome. **Orchestrator-run** gates (no human halt): Story Gate (DoR, sm) and Feature Gate (Feature-DoR, rte) — the latter escalates to the human when the Feature is `structurant` or its WSJF / scope is contested. **Re-iterate loop:** every *definition* gate may reject back to re-refine. There is **no PRD gate** — an Epic entering `portfolio-backlog` authorizes downstream Feature work.
+
+### Units of work (business + enabler)
+
+Every unit carries `type: business | enabler` (Stories: `user | enabler`). **Enablers** do work that supports future functionality and traverse the **same FSM + gates** as business units — only their framing differs (no business value; they carry an `enabler_type` and extend the **architectural runway**). Four enabler types → bench lens:
+
+| Enabler type | Lens | Seeded by |
+|---|---|---|
+| exploration (spike) | dev / `SE: Architect` | Story Backlog Refinement (Story); Feature Backlog Refinement (Feature) |
+| architectural | `SE: Architect` | Architectural Vision (Epic); Architectural Runway Extension (Feature) |
+| infrastructure | `SE: DevOps/CI` | Architectural Runway Extension (Feature) |
+| compliance | `SE: Security` / `SE: Responsible AI` | Architectural Vision / Runway Extension |
+
+Enablers are **WSJF-ranked alongside business units**; the EA / SA practices seed enabler Epics + Features, refinement seeds enabler Stories (spikes).
 
 ### Peer challenge (adversarial review before each gate)
 
@@ -265,11 +356,11 @@ Every artifact is **challenged by a different-lens peer before it reaches its ga
 | Artifact | Challenger(s) — different lens | SAFe analog | Before |
 |---|---|---|---|
 | Epic | PM ⇄ EA hat; `SE: Responsible AI` / `SE: Security` on ethics/risk | Portfolio backlog refinement | ★ Epic Gate |
-| Feature + ADR | `SE: Architect` ⇄ `SE: Security` + `SE: DevOps/CI` | ART Sync / ADR review | ★ ADR Gate |
+| Feature + ADR | `SE: Architect` ⇄ `SE: Security` + `SE: DevOps/CI` | ART Sync / ADR review | ★ Architecture Gate |
 | Story (pre-build) | PO ⇄ SM (DoR check) | Backlog refinement | ★ Story Gate |
 | Code (per unit) | Navigator ⇄ Driver (mandatory CRITIQUE); `SE: Security` on trust boundaries | Pair review | during execution |
 | PR | `SE: Security` (mandatory pre-merge) + `ai-team-qa` sign-off | PR review | ★ PR Gate |
-| Feature increment | Central Supervisor + bench feedback | System Demo | ★ Feature Gate |
+| Feature increment | Central Supervisor + bench feedback | System Demo | ★ Demo Gate |
 | The process itself | all roles | Inspect & Adapt / Retro | per PI / sprint |
 
 Material findings are logged to `sprint-N/gate-decisions.md` (sprint-scoped artifacts) or surfaced in the gate packet (Epic/ADR); an unresolved challenge is a `gate-decisions.md` entry (`accept` / `rework` / `defer`).
@@ -336,14 +427,14 @@ truth for content; the board is authoritative for non-gate status moves. Normati
 - **Authoring vs policing.** The hat-wearing **author agents own the backlog artifacts**: `SE: Product Manager` authors Epics + Strategic Themes (BO hat), Features (PM hat), and Stories (PO hat); `SE: Architect` authors ADRs + the EA runway. The **orchestrators never author or own these** — they *police* their layer (control I/O artifacts, enforce template + SAFe conformance, own the flow / gates / kanban / templates). The **Central Supervisor approves** at the gates. One Feature per product, each linked to its shared Epic.
 - **QA-before-PR.** No Story reaches the **★ PR Gate** without `qa/S-NNN-signoff.md`.
 - **Challenge-before-gate.** No artifact reaches its gate without its designated **peer challenge** (Peer-challenge matrix): a different-lens specialist adversarially reviews it first. A challenge sharpens but never approves — the gate still decides; material findings are logged to `sprint-N/gate-decisions.md` (sprint-scoped) or the gate packet.
-- **Observability stories load the instrumentation skill.** Any Story changing telemetry dispatches Driver + QA with the relevant observability skill loaded; the QA sign-off includes that skill's alignment audit with machine checks green. A failing machine check blocks `awaiting-pr`.
+- **Observability stories load the instrumentation skill.** Any Story changing telemetry dispatches Driver + QA with the `relevant observability skill` skill loaded; the QA sign-off includes that skill's §5b Instrumentation Alignment Audit with the INST-R7/R8 machine checks green. A failing machine check blocks `awaiting-pr`.
 - **Kanban files are rendered, never hand-edited.**
 - **GitHub Projects boards mirror the kanbans** (one Project per product); reconcile via
   portfolio/_sync per the sync protocol. A board move across a gate boundary is a request, never
   approval. **Publish-before-gate (all tiers, mandatory):** every work item is pushed to its GitHub
   Project board *before* the validation gate that governs it, and its `github:` block is written
   back, so the Central Supervisor reviews its card on GitHub *during* the gate — **Epic → ★ Epic Gate**
-  (Portfolio Epics board; `@vmo-orchestrator`), **Feature → ★ ADR Gate** (product Program board;
+  (Portfolio Epics board; `@vmo-orchestrator`), **Feature → ★ Architecture Gate** (product Program board;
   `@rte-orchestrator`), **Story → ★ PR Gate** (product Team board; `@sm-orchestrator`). No item
   reaches its gate without a live board card; the gate-crossing status flip itself is still never
   auto-applied (board spec §8).
@@ -384,12 +475,12 @@ Output (filled at/after Retro / Inspect & Adapt):
 
 ## Artifact templates (mandatory)
 
-All templates live in [references/](./references/). Refuse to author an artifact without consulting its template.
+Templates are distributed to the owning orchestration skills (`vmo`/`rte`/`sm`), with cross-cutting references retained in [references/](./references/). Refuse to author an artifact without consulting its template.
 
 **Template ownership (by layer).** Each orchestrator **owns and maintains** its tier's templates and enforces conformance; cross-cutting ones stay in orchestration-core. Authors always use the current owned version.
 
-- **`vmo-orchestration` owns:** portfolio-init, strategic-themes, epic, product-init, kanban-portfolio.
-- **`rte-orchestration` owns:** feature, adr, pi-objectives, risks, inspect-adapt, kanban-program.
+- **`vmo-orchestration` owns:** portfolio-init, strategic-themes, epic, lean-business-case, architectural-vision, product-init, kanban-portfolio.
+- **`rte-orchestration` owns:** feature, adr, vision, roadmap, nfr-register, runway-register, pi-objectives, risks, inspect-adapt, kanban-program.
 - **`sm-orchestration` owns:** sprint-plan, story, qa-signoff, daily, retro, progress, gate-decisions, kanban-team.
 - **`orchestration-core` owns (cross-cutting):** github board spec, sync protocol, sync config, cost-accounting, workflow-improvement-ledger, project-brief, anti-patterns, brainstorm-format.
 
@@ -399,9 +490,15 @@ All templates live in [references/](./references/). Refuse to author an artifact
 | Portfolio init (singleton) | `portfolio/portfolio.yaml` | [portfolio-init-template.md](../vmo-orchestration/references/portfolio-init-template.md) |
 | Strategic Themes (singleton) | `portfolio/strategic-themes.md` | [strategic-themes-template.md](../vmo-orchestration/references/strategic-themes-template.md) |
 | Epic | `portfolio/epics/E-NN-*.md` | [epic-template.md](../vmo-orchestration/references/epic-template.md) |
+| Lean Business Case | `portfolio/epics/E-NN-lbc.md` | [lean-business-case-template.md](../vmo-orchestration/references/lean-business-case-template.md) |
+| Architectural Vision (singleton) | `portfolio/architectural-vision.md` | [architectural-vision-template.md](../vmo-orchestration/references/architectural-vision-template.md) |
 | Portfolio Kanban (rendered) | `portfolio/kanban/portfolio.md` | [kanban-portfolio-template.md](../vmo-orchestration/references/kanban-portfolio-template.md) |
 | Product manifest | `portfolio/<slug>/product.yaml` | [product-init-template.md](../vmo-orchestration/references/product-init-template.md) |
 | Feature | `features/F-NN-*.md` | [feature-template.md](../rte-orchestration/references/feature-template.md) |
+| Product Vision | `portfolio/<slug>/vision.md` | [vision-template.md](../rte-orchestration/references/vision-template.md) |
+| Roadmap | `portfolio/<slug>/roadmap.md` | [roadmap-template.md](../rte-orchestration/references/roadmap-template.md) |
+| NFR register | `portfolio/<slug>/nfrs.md` | [nfr-register-template.md](../rte-orchestration/references/nfr-register-template.md) |
+| Architectural Runway | `portfolio/<slug>/runway.md` | [runway-register-template.md](../rte-orchestration/references/runway-register-template.md) |
 | ADR | `architecture/adr-NNN-*.md` | [adr-template.md](../rte-orchestration/references/adr-template.md) |
 | Sprint plan | `sprint-N/plan.md` | [sprint-plan-template.md](../sm-orchestration/references/sprint-plan-template.md) |
 | Story | `sprint-N/stories/S-NNN.md` | [story-template.md](../sm-orchestration/references/story-template.md) |
@@ -416,7 +513,8 @@ All templates live in [references/](./references/). Refuse to author an artifact
 | Inspect & Adapt | `pi-M/inspect-adapt.md` | [inspect-adapt-template.md](../rte-orchestration/references/inspect-adapt-template.md) |
 | Program Kanban (rendered) | `kanban/program.md` | [kanban-program-template.md](../rte-orchestration/references/kanban-program-template.md) |
 | Team Kanban (rendered) | `kanban/team-sprint-N.md` | [kanban-team-template.md](../sm-orchestration/references/kanban-team-template.md) |
-| GitHub board spec (normative) | — (GitHub Projects) | [github-projects-board-spec.md](./references/github-projects-board-spec.md) || GitHub sync config (per product) | `portfolio/<slug>/github-sync.yaml` | [github-sync-config-template.yaml.md](./references/github-sync-config-template.yaml.md) |
+| GitHub board spec (normative) | — (GitHub Projects) | [github-projects-board-spec.md](./references/github-projects-board-spec.md) |
+| GitHub sync config (per product) | `portfolio/<slug>/github-sync.yaml` | [github-sync-config-template.yaml.md](./references/github-sync-config-template.yaml.md) |
 | GitHub sync protocol (normative) | — (toolchain `portfolio/_sync/`) | [github-sync-protocol.md](./references/github-sync-protocol.md) |
 | Cost accounting protocol (normative) | — (`cost:` blocks; sourced from ecosystem debug logs) | [cost-accounting-protocol.md](./references/cost-accounting-protocol.md) |
 | Project brief (per repo) | `<repo>/PROJECT_BRIEF.md` | [project-brief-template.md](./references/project-brief-template.md) |
