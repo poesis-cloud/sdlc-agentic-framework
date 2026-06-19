@@ -1,11 +1,11 @@
 {
     "$license": "Copyright 2026 Poesis Cloud and contributors — Apache License, Version 2.0 — http://www.apache.org/licenses/LICENSE-2.0",
-    "name": "poesis-sdlc-agentic-framework",
+    "name": "poesis-safe-agentic-framework",
     "version": "0.1.0",
     "description": "SAFe-shaped SDLC orchestration — portfolio/program/iteration orchestrators, specialist bench, and model routing",
     "publisher": "poesis-cloud",
     "license": "Apache-2.0",
-    "repository": "https://github.com/poesis-cloud/sdlc-agentic-framework",
+    "repository": "https://github.com/poesis-cloud/safe-agentic-framework",
     "prerequisites": [
         {
             "name": "software-engineering-team",

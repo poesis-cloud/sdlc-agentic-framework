@@ -1,5 +1,5 @@
 ---
-# CI baseline for sdlc-agentic-framework
+# CI baseline for safe-agentic-framework
 # Runs on every push and PR to main.
 # Jobs: markdown lint, YAML lint, license-header check (stub — enforces once SHIP content lands).
 
