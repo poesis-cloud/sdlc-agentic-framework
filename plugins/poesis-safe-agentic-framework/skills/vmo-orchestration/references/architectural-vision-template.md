@@ -2,7 +2,7 @@
 
 The cross-product **Architectural Vision** (SAFe) — the future-state architecture, the NFR
 backbone, and the architectural-runway direction. Authored by `SE: Architect`·EA in the
-**Architectural Vision** practice (`safe-architectural-vision`); the portfolio's
+**Architectural Vision** practice (`architectural-vision`); the portfolio's
 intentional-architecture anchor. Feeds Epic runway (`reviewing→analyzing`) and every product's
 NFR register + runway register. Portfolio-scoped singleton.
 

@@ -1,7 +1,7 @@
 # NFR Register Template — `portfolio/<slug>/nfrs.md`
 
 The product **Nonfunctional Requirements** register (SAFe NFRs / quality attributes). Seeded from
-the **Architectural Vision** NFR backbone (`safe-architectural-vision`), maintained by
+the **Architectural Vision** NFR backbone (`architectural-vision`), maintained by
 `SE: Architect` + `SE: Security`. NFRs are **constraints** on Features / Stories, **verified** at
 Verification & Sign-off and the System Demo. Compliance NFRs may spawn **enabler** work.
 

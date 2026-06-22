@@ -73,17 +73,17 @@ What batch SAFe bought, per-unit covers without a clock: **cross-Feature coordin
 
 ### Handlers & ceremonies as loadable skills (the router/handler split)
 
-The orchestration skills are the **router**; each handler's **body** is a separate **loadable skill** (`safe-*`). The event-handler tables are the dispatch registry; the **skill registry** below binds each row to the skill that executes it. The orchestrator stays thin (index + gates + kanban + routing); depth lives one level down, loaded **on demand** (progressive disclosure). This is the command-bus / handler-registry pattern: orchestrator = bus, table = registry, each row's body = a skill.
+The orchestration skills are the **router**; each handler's **body** is a separate **loadable skill**. The event-handler tables are the dispatch registry; the **skill registry** below binds each row to the skill that executes it. The orchestrator stays thin (index + gates + kanban + routing); depth lives one level down, loaded **on demand** (progressive disclosure). This is the command-bus / handler-registry pattern: orchestrator = bus, table = registry, each row's body = a skill.
 
 Three skill families split the handler bodies:
 
-- **Author skills** — `safe-<role>`, one per SAFe authoring hat (BO / PM / PO / EA / SA). Loaded by the **dispatched SE agent** that authors **inside a ceremony or practice**. Each is **input-keyed**: a small entry table maps *the requested output-state* → the right authoring procedure (authoring depth lives **inside** the role skill — no per-transition skill explosion).
-- **Ceremony skills** — `safe-<ceremony>`, one per SAFe **event**. Loaded by the **orchestrator** to facilitate the sub-orchestration when a unit reaches its condition.
-- **Practice skills** — `safe-<practice>`, one per SAFe **practice**. Loaded by the **orchestrator** to facilitate a continuous-collaboration sub-orchestration (no solo authoring).
+- **Author skills** — `<role>` for BO / PO / EA / SA, plus `product-manager-author` for PM to avoid colliding with the Poesis `product-manager` skill. Loaded by the **dispatched SE agent** that authors **inside a ceremony or practice**. Each is **input-keyed**: a small entry table maps *the requested output-state* → the right authoring procedure (authoring depth lives **inside** the role skill — no per-transition skill explosion).
+- **Ceremony skills** — `<ceremony>`, one per SAFe **event**. Loaded by the **orchestrator** to facilitate the sub-orchestration when a unit reaches its condition.
+- **Practice skills** — `<practice>`, one per SAFe **practice**. Loaded by the **orchestrator** to facilitate a continuous-collaboration sub-orchestration (no solo authoring).
 
-**Load mechanism (explicit, not auto-trigger).** Description auto-match is unreliable for *dispatched* subagents, so the dispatch prompt **names the skill + path + handler**: e.g. `Acting as PM — load skills/safe-product-manager, execute handler "Feature@funnel"`. An orchestrator loads its own ceremony skill before facilitating a ceremony.
+**Load mechanism (explicit, not auto-trigger).** Description auto-match is unreliable for *dispatched* subagents, so the dispatch prompt **names the skill + path + handler**: e.g. `Acting as PM — load skills/product-manager-author, execute handler "Feature@funnel"`. An orchestrator loads its own ceremony skill before facilitating a ceremony.
 
-**Guard rails travel into every `safe-*` skill** (they do not relax the model): never decide a ★ gate (the Central Supervisor decides); **consume** the orchestrator-owned templates from `references/`, never restate them (one source of truth); obey the blackboard contract (read committed input artifact(s) → commit the output artifact). Name them `safe-*` to avoid collision with the Poesis `product-manager` skill and the `bmad-*` family.
+**Guard rails travel into every orchestration sub-skill** (they do not relax the model): never decide a ★ gate (the Central Supervisor decides); **consume** the orchestrator-owned templates from `references/`, never restate them (one source of truth); obey the blackboard contract (read committed input artifact(s) → commit the output artifact). Skill names now drop the `safe-` prefix; `product-manager-author` remains the only collision-avoidance exception because Poesis already has a `product-manager` skill.
 
 **Ceremonies and practices are facilitated sub-orchestrations.** Neither is solo work: each names its **Participants** (≥2, drawn from **the Bench** below) and an **Exchange** table that sequences their turns in the same `input → agent·hat → output` shape as the handlings: `# | participant·hat | contributes (reads → produces) | hands to`. The orchestrator is the **facilitator**: it opens the sub-orchestration, sequences the turns, and validates each output, but **authors nothing** — and is the **only writer of `status:`**, committing the unit's transition only after the sub-orchestration returns. Every participant authors only its own contribution per its role skill / bench role. The **Central Supervisor** joins only where a ★ gate or a pivot decision applies. Pick the participant roster systematically from the Bench (dev, QA, UX, Security, DevOps, Architect, RAI, …), not just the owning hat.
 
@@ -91,31 +91,31 @@ Three skill families split the handler bodies:
 
 | Sub-orchestration / handling | Loaded by | Skill | Family |
 |---|---|---|---|
-| Strategic Portfolio Review | `@vmo-orchestrator` | `safe-strategic-portfolio-review` | Ceremony |
-| Participatory Budgeting | `@vmo-orchestrator` | `safe-participatory-budgeting` | Ceremony |
-| Portfolio Sync | `@vmo-orchestrator` | `safe-portfolio-sync` | Ceremony |
-| Epic Lean Business Case | `@vmo-orchestrator` | `safe-epic-lean-business-case` | Practice·CE |
-| Architectural Vision | `@vmo-orchestrator` | `safe-architectural-vision` | Practice·CE |
-| Feature Backlog Refinement | `@rte-orchestrator` | `safe-feature-backlog-refinement` | Ceremony·CE |
-| PI Planning | `@rte-orchestrator` | `safe-pi-planning` | Ceremony |
-| System Demo (stages the ★ Demo Gate) | `@rte-orchestrator` | `safe-system-demo` | Ceremony |
-| ART Sync | `@rte-orchestrator` | `safe-art-sync` | Ceremony |
-| Inspect & Adapt | `@rte-orchestrator` | `safe-inspect-and-adapt` | Ceremony |
-| Architectural Runway Extension | `@rte-orchestrator` | `safe-architectural-runway-extension` | Practice·CE |
-| Iteration Planning | `@sm-orchestrator` | `safe-iteration-planning` | Ceremony |
-| Story Backlog Refinement | `@sm-orchestrator` | `safe-story-backlog-refinement` | Ceremony·CE |
-| Daily Sync | `@sm-orchestrator` | `safe-daily-sync` | Ceremony |
-| Iteration Review | `@sm-orchestrator` | `safe-iteration-review` | Ceremony |
-| Retrospective | `@sm-orchestrator` | `safe-retrospective` | Ceremony |
-| Pair micro-cycle (Driver / Navigator / Security) | `@sm-orchestrator` | `safe-pair-programming` | Practice·CI |
-| Verification & Sign-off (QA + Security) | `@sm-orchestrator` | `safe-verification` | Practice·CI |
-| — BO hat (Epic authoring) | dispatched `SE:PM`·BO | `safe-business-owner` | Author |
-| — EA hat (Vision / runway) | dispatched `SE:Architect`·EA | `safe-enterprise-architect` | Author |
-| — PM hat (Feature authoring) | dispatched `SE:PM`·PM | `safe-product-manager` | Author |
-| — SA hat (ADR / runway extension) | dispatched `SE:Architect`·SA | `safe-system-architect` | Author |
-| — PO hat (Story authoring) | dispatched `SE:PM`·PO | `safe-product-owner` | Author |
+| Strategic Portfolio Review | `@vmo-orchestrator` | `strategic-portfolio-review` | Ceremony |
+| Participatory Budgeting | `@vmo-orchestrator` | `participatory-budgeting` | Ceremony |
+| Portfolio Sync | `@vmo-orchestrator` | `portfolio-sync` | Ceremony |
+| Epic Lean Business Case | `@vmo-orchestrator` | `epic-lean-business-case` | Practice·CE |
+| Architectural Vision | `@vmo-orchestrator` | `architectural-vision` | Practice·CE |
+| Feature Backlog Refinement | `@rte-orchestrator` | `feature-backlog-refinement` | Ceremony·CE |
+| PI Planning | `@rte-orchestrator` | `pi-planning` | Ceremony |
+| System Demo (stages the ★ Demo Gate) | `@rte-orchestrator` | `system-demo` | Ceremony |
+| ART Sync | `@rte-orchestrator` | `art-sync` | Ceremony |
+| Inspect & Adapt | `@rte-orchestrator` | `inspect-and-adapt` | Ceremony |
+| Architectural Runway Extension | `@rte-orchestrator` | `architectural-runway-extension` | Practice·CE |
+| Iteration Planning | `@sm-orchestrator` | `iteration-planning` | Ceremony |
+| Story Backlog Refinement | `@sm-orchestrator` | `story-backlog-refinement` | Ceremony·CE |
+| Daily Sync | `@sm-orchestrator` | `daily-sync` | Ceremony |
+| Iteration Review | `@sm-orchestrator` | `iteration-review` | Ceremony |
+| Retrospective | `@sm-orchestrator` | `retrospective` | Ceremony |
+| Pair micro-cycle (Driver / Navigator / Security) | `@sm-orchestrator` | `pair-programming` | Practice·CI |
+| Verification & Sign-off (QA + Security) | `@sm-orchestrator` | `verification` | Practice·CI |
+| — BO hat (Epic authoring) | dispatched `SE:PM`·BO | `business-owner` | Author |
+| — EA hat (Vision / runway) | dispatched `SE:Architect`·EA | `enterprise-architect` | Author |
+| — PM hat (Feature authoring) | dispatched `SE:PM`·PM | `product-manager-author` | Author |
+| — SA hat (ADR / runway extension) | dispatched `SE:Architect`·SA | `system-architect` | Author |
+| — PO hat (Story authoring) | dispatched `SE:PM`·PO | `product-owner` | Author |
 
-The **★ gates** carry no skill — they are the Central Supervisor's decision, **except** the two orchestrator-run definition gates: the **★ Story Gate** (DoR, `@sm` inside `safe-iteration-planning`) and the **★ Feature Gate** (Feature-DoR, `@rte` after `safe-feature-backlog-refinement`), which escalate to the human only when contested / structurant.
+The **★ gates** carry no skill — they are the Central Supervisor's decision, **except** the two orchestrator-run definition gates: the **★ Story Gate** (DoR, `@sm` inside `iteration-planning`) and the **★ Feature Gate** (Feature-DoR, `@rte` after `feature-backlog-refinement`), which escalate to the human only when contested / structurant.
 
 ## Product workspace (poesis-level)
 

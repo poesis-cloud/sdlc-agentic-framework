@@ -1,7 +1,7 @@
 # Lean Business Case Template — `portfolio/epics/E-NN-lbc.md`
 
 The Epic's **Lean Business Case** (SAFe). Authored in the **Epic Lean Business Case** practice
-(`safe-epic-lean-business-case`) — `SE: Product Manager`·BO drafts; `SE: Architect`·EA,
+(`epic-lean-business-case`) — `SE: Product Manager`·BO drafts; `SE: Architect`·EA,
 `SE: Responsible AI`, `SE: Security` challenge. It is the evidence the Central Supervisor (BO hat)
 weighs at the **★ Epic Gate**, and the unit **Participatory Budgeting** funds. Portfolio-scoped;
 companion to its Epic `E-NN`.
@@ -35,7 +35,7 @@ The smallest Feature set that tests the hypothesis (`mvp_features` on the Epic).
 Rough order of magnitude; informs Participatory Budgeting.
 
 ## Enabler / runway dependency
-Architectural-runway items this Epic consumes or requires (→ `safe-architectural-vision`).
+Architectural-runway items this Epic consumes or requires (→ `architectural-vision`).
 
 ## Pivot / persevere / stop criteria
 What evidence would change the decision (assessed at Strategic Portfolio Review / Inspect & Adapt).
