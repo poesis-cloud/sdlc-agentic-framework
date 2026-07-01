@@ -1,0 +1,156 @@
+workflow:
+  version: 2
+  id: architectural-runway-extension
+  rank: suborchestration
+  kind: practice
+  parent: art
+  cdp_stage: continuous-exploration
+  facilitator: '@release-train-engineer'
+  skills: [architectural-runway-extension]
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  steps:
+  - id: inventory
+    kind: author
+    actor: '@system-architect'
+    output: architecture-decision-inventory
+    conditions:
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: feature_arch_pending_structurant
+      expression: cel
+      value: status == "arch-pending" && has(unit.structurant)
+    - kind: postcondition
+      type: content
+      id: decision_inventory_committed
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.decision_inventory_committed) && unit.attestations.decision_inventory_committed
+    - kind: postcondition
+      type: content
+      id: adr_or_inventory_waiver_for_each_decision_unit
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.adr_or_inventory_waiver_for_each_decision_unit) && unit.attestations.adr_or_inventory_waiver_for_each_decision_unit
+  - id: challenge-security
+    kind: challenge
+    actor: '@security-expert'
+    output: security-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: inventory
+      id: after_inventory
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: security_trust_boundary_challenge_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.security_trust_boundary_challenge_recorded) && unit.attestations.security_trust_boundary_challenge_recorded
+  - id: challenge-operability
+    kind: challenge
+    actor: '@operator'
+    output: operability-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: inventory
+      id: after_inventory
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: operator_operability_challenge_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.operator_operability_challenge_recorded) && unit.attestations.operator_operability_challenge_recorded
+  - id: challenge-feasibility
+    kind: challenge
+    actor: '@developer'
+    output: feasibility-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: inventory
+      id: after_inventory
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: developer_feasibility_challenge_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.developer_feasibility_challenge_recorded) && unit.attestations.developer_feasibility_challenge_recorded
+  - id: owner-rewrite
+    kind: author
+    actor: '@system-architect'
+    output: runway-register
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: challenge-security
+      id: after_challenge_security
+    - kind: precondition
+      type: after
+      expression: ref
+      value: challenge-operability
+      id: after_challenge_operability
+    - kind: precondition
+      type: after
+      expression: ref
+      value: challenge-feasibility
+      id: after_challenge_feasibility
+    - kind: postcondition
+      type: content
+      id: owner_rewrite_completed_after_challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.owner_rewrite_completed_after_challenge) && unit.attestations.owner_rewrite_completed_after_challenge
+    - kind: postcondition
+      type: content
+      id: runway_gaps_classified_and_nfr_updates_committed_or_waived
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.runway_gaps_classified_and_nfr_updates_committed_or_waived) && unit.attestations.runway_gaps_classified_and_nfr_updates_committed_or_waived
+    - kind: postcondition
+      type: state
+      id: no_open_blocking_items
+      expression: cel
+      value: open_items_clear
+  - id: stage-gate
+    kind: gate
+    gate: ★ Architecture Gate
+    actor: '@release-train-engineer'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: owner-rewrite
+      id: after_owner_rewrite
+    - kind: postcondition
+      type: state
+      id: architecture_gate_packet_ready
+      expression: cel
+      value: gate_packet_ok
+    - kind: postcondition
+      type: consistency
+      id: replay_on_late_enabler_handled
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.replay_on_late_enabler_handled) && unit.attestations.replay_on_late_enabler_handled
+    - kind: postcondition
+      type: content
+      id: unresolved_gate_questions_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.unresolved_gate_questions_recorded) && unit.attestations.unresolved_gate_questions_recorded

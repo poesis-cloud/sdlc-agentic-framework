@@ -1,0 +1,266 @@
+workflow:
+  version: 2
+  id: scrum
+  rank: root
+  drives: story
+  facilitator: '@scrum-master'
+  skills: [orchestration-core, scrum-orchestration]
+  fsm:
+  - backlog
+  - ready
+  - in-progress
+  - in-review
+  - in-qa
+  - awaiting-pr
+  - done
+  - blocked
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  recurring_suborchestrations:
+  - daily-sync
+  - iteration-review
+  - retrospective
+  steps:
+  - id: plan-iteration
+    kind: delegate
+    delegates_to: workflows/iteration-planning
+    actor: '@scrum-master'
+    conditions:
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/
+      id: input_features
+    - kind: precondition
+      type: content
+      id: committed_parent_feature_provided
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.committed_parent_feature_provided) && unit.attestations.committed_parent_feature_provided
+    - kind: invariant
+      type: authority
+      id: only_sm_writes_status
+      expression: instruction
+      value: instructions/only-sm-writes-status.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/kanban/
+      id: output_kanban
+    - kind: postcondition
+      type: content
+      id: stories_authored_and_pairs_assigned
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.stories_authored_and_pairs_assigned) && unit.attestations.stories_authored_and_pairs_assigned
+    - kind: postcondition
+      type: transition
+      id: status_committed_backlog
+      expression: cel
+      value: status == "backlog"
+  - id: groom-story
+    kind: delegate
+    delegates_to: workflows/story-backlog-refinement
+    actor: '@scrum-master'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: plan-iteration
+      id: after_plan_iteration
+    - kind: precondition
+      type: state
+      id: story_in_backlog
+      expression: cel
+      value: status == "backlog"
+    - kind: precondition
+      type: state
+      id: not_yet_dor_ready_else_trivial
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.not_yet_dor_ready_else_trivial) && unit.attestations.not_yet_dor_ready_else_trivial
+    - kind: invariant
+      type: authority
+      id: only_sm_writes_status_story_stays_owner_owned
+      expression: instruction
+      value: instructions/only-sm-writes-status-story-stays-owner-owned.instructions.md
+    - kind: postcondition
+      type: content
+      id: grooming_packet_committed
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.grooming_packet_committed) && unit.attestations.grooming_packet_committed
+  - id: story-gate
+    kind: gate
+    gate: ★ Story Gate
+    actor: '@scrum-master'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: groom-story
+      id: after_groom_story
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/
+      id: input_features
+    - kind: precondition
+      type: state
+      id: story_in_backlog
+      expression: cel
+      value: status == "backlog"
+    - kind: precondition
+      type: state
+      id: no_open_blocking_items
+      expression: cel
+      value: open_items_clear
+    - kind: invariant
+      type: authority
+      id: story_gate_sm_run_dor
+      expression: instruction
+      value: instructions/story-gate-sm-run-dor.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/kanban/
+      id: output_kanban
+    - kind: postcondition
+      type: transition
+      id: story_gate_verdict_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.story_gate_verdict_recorded) && unit.attestations.story_gate_verdict_recorded
+  - id: execute-story
+    kind: delegate
+    delegates_to: workflows/pair-programming
+    actor: '@scrum-master'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: story-gate
+      id: after_story_gate
+    - kind: precondition
+      type: state
+      id: story_ready
+      expression: cel
+      value: status == "ready"
+    - kind: invariant
+      type: authority
+      id: only_sm_writes_status_pair_authors_code
+      expression: instruction
+      value: instructions/only-sm-writes-status-pair-authors-code.instructions.md
+    - kind: postcondition
+      type: content
+      id: pair_micro_cycle_driven
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.pair_micro_cycle_driven) && unit.attestations.pair_micro_cycle_driven
+    - kind: postcondition
+      type: transition
+      id: story_driven_in_progress
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.story_driven_in_progress) && unit.attestations.story_driven_in_progress
+  - id: accept-to-qa
+    kind: direct
+    actor: '@scrum-master'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: execute-story
+      id: after_execute_story
+    - kind: precondition
+      type: state
+      id: story_in_review
+      expression: cel
+      value: status == "in-review"
+    - kind: precondition
+      type: state
+      id: critique_accepted_and_wip_ok
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.critique_accepted_and_wip_ok) && unit.attestations.critique_accepted_and_wip_ok
+    - kind: invariant
+      type: authority
+      id: only_sm_writes_status
+      expression: instruction
+      value: instructions/only-sm-writes-status.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/kanban/
+      id: output_kanban
+    - kind: postcondition
+      type: transition
+      id: status_committed_in_qa
+      expression: cel
+      value: status == "in-qa"
+  - id: verify-story
+    kind: delegate
+    delegates_to: workflows/verification
+    actor: '@scrum-master'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: accept-to-qa
+      id: after_accept_to_qa
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/
+      id: input_features
+    - kind: precondition
+      type: state
+      id: story_in_qa
+      expression: cel
+      value: status == "in-qa"
+    - kind: invariant
+      type: authority
+      id: only_sm_writes_status_qa_security_verdicts_only
+      expression: instruction
+      value: instructions/only-sm-writes-status-qa-security-verdicts-only.instructions.md
+    - kind: postcondition
+      type: content
+      id: qa_signoff_and_security_verdict_committed
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.qa_signoff_and_security_verdict_committed) && unit.attestations.qa_signoff_and_security_verdict_committed
+    - kind: postcondition
+      type: transition
+      id: status_committed_awaiting_pr_with_cost
+      expression: cel
+      value: status == "awaiting-pr" && has(unit.cost)
+  - id: pr-gate
+    kind: gate
+    gate: ★ PR Gate
+    actor: central-supervisor (Business-Owner hat)
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: verify-story
+      id: after_verify_story
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/
+      id: input_features
+    - kind: precondition
+      type: state
+      id: story_awaiting_pr
+      expression: cel
+      value: status == "awaiting-pr"
+    - kind: precondition
+      type: state
+      id: gate_packet_ok
+      expression: cel
+      value: gate_packet_ok
+    - kind: invariant
+      type: authority
+      id: human_decides_gate_rte_merges
+      expression: instruction
+      value: instructions/human-decides-gate-rte-merges.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/gate-decisions.md
+      id: output_gate_decisions_md
+    - kind: postcondition
+      type: transition
+      id: story_merged_and_rolled_up
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.story_merged_and_rolled_up) && unit.attestations.story_merged_and_rolled_up

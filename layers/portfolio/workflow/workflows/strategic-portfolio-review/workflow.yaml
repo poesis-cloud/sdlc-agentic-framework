@@ -1,0 +1,140 @@
+workflow:
+  version: 2
+  id: strategic-portfolio-review
+  rank: suborchestration
+  kind: ceremony
+  parent: lpm
+  facilitator: '@value-management-officier'
+  skills: [strategic-portfolio-review]
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  steps:
+  - id: rerank
+    kind: author
+    actor: '@business-owner'
+    output: strategic-themes
+    conditions:
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/strategic-themes.md
+      id: input_strategic_themes_md
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/epics/
+      id: input_epics
+    - kind: postcondition
+      type: content
+      id: business_owner_wsjf_rerank_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.business_owner_wsjf_rerank_recorded) && unit.attestations.business_owner_wsjf_rerank_recorded
+    - kind: postcondition
+      type: content
+      id: strategic_theme_fit_or_revision_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.strategic_theme_fit_or_revision_recorded) && unit.attestations.strategic_theme_fit_or_revision_recorded
+  - id: challenge-runway
+    kind: challenge
+    actor: '@enterprise-architect'
+    output: architecture-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: rerank
+      id: after_rerank
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: enterprise_architect_runway_enabler_view_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.enterprise_architect_runway_enabler_view_recorded) && unit.attestations.enterprise_architect_runway_enabler_view_recorded
+  - id: challenge-security
+    kind: challenge
+    actor: '@security-expert'
+    output: security-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: rerank
+      id: after_rerank
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: security_risk_lens_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.security_risk_lens_recorded) && unit.attestations.security_risk_lens_recorded
+  - id: owner-rewrite
+    kind: author
+    actor: '@business-owner'
+    output: strategic-themes
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: challenge-runway
+      id: after_challenge_runway
+    - kind: precondition
+      type: after
+      expression: ref
+      value: challenge-security
+      id: after_challenge_security
+    - kind: postcondition
+      type: content
+      id: owner_rewrite_recorded_after_challenges
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.owner_rewrite_recorded_after_challenges) && unit.attestations.owner_rewrite_recorded_after_challenges
+  - id: decide
+    kind: commit
+    actor: central-supervisor (Business-Owner hat)
+    output: portfolio-review-decision
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: owner-rewrite
+      id: after_owner_rewrite
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/epics/
+      id: input_epics
+    - kind: invariant
+      type: authority
+      id: human_decides_pivots
+      expression: instruction
+      value: instructions/human-decides-pivots.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/kanban/portfolio.md
+      id: output_portfolio_md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/gate-decisions.md
+      id: output_gate_decisions_md
+    - kind: postcondition
+      type: transition
+      id: central_supervisor_pivot_persevere_stop_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.central_supervisor_pivot_persevere_stop_recorded) && unit.attestations.central_supervisor_pivot_persevere_stop_recorded
+    - kind: postcondition
+      type: content
+      id: workflow_improvement_ledger_triaged
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.workflow_improvement_ledger_triaged) && unit.attestations.workflow_improvement_ledger_triaged
+    - kind: postcondition
+      type: state
+      id: no_open_blocking_items
+      expression: cel
+      value: open_items_clear

@@ -1,0 +1,300 @@
+workflow:
+  version: 2
+  id: lpm
+  rank: root
+  drives: epic
+  facilitator: "@value-management-officier"
+  skills: [orchestration-core, lpm-orchestration]
+  fsm:
+    - funnel
+    - reviewing
+    - analyzing
+    - portfolio-backlog
+    - implementing
+    - done
+    - blocked
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  recurring_suborchestrations:
+    - strategic-portfolio-review
+    - participatory-budgeting
+    - portfolio-sync
+  steps:
+    - id: capture-epic
+      kind: delegate
+      delegates_to: workflows/epic-lean-business-case
+      actor: "@value-management-officier"
+      conditions:
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/strategic-themes.md
+          id: input_strategic_themes_md
+        - kind: precondition
+          type: content
+          id: raw_idea_provided
+          expression: cel
+          value: has(unit.attestations) && has(unit.attestations.raw_idea_provided) && unit.attestations.raw_idea_provided
+        - kind: invariant
+          type: authority
+          id: only_vmo_writes_status
+          expression: instruction
+          value: instructions/only-vmo-writes-status.instructions.md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/epics/{unit_id}.md
+          id: output_unit_id_md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/epics/{unit_id}-lbc.md
+          id: output_unit_id_lbc_md
+        - kind: postcondition
+          type: content
+          id: strategic_theme_present
+          expression: cel
+          value: has(unit.strategic_theme)
+        - kind: postcondition
+          type: content
+          id: suborchestration_returned_shaped_epic
+          expression: cel
+          value: has(unit.attestations) && has(unit.attestations.suborchestration_returned_shaped_epic) && unit.attestations.suborchestration_returned_shaped_epic
+        - kind: postcondition
+          type: transition
+          id: status_committed_funnel
+          expression: cel
+          value: status == "funnel"
+    - id: shape-epic
+      kind: delegate
+      delegates_to: workflows/epic-lean-business-case
+      actor: "@value-management-officier"
+      conditions:
+        - kind: precondition
+          type: after
+          expression: ref
+          value: capture-epic
+          id: after_capture_epic
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/epics/{unit_id}.md
+          id: input_unit_id_md
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/epics/{unit_id}-lbc.md
+          id: input_unit_id_lbc_md
+        - kind: precondition
+          type: state
+          id: epic_in_funnel
+          expression: cel
+          value: status == "funnel"
+        - kind: invariant
+          type: authority
+          id: only_vmo_writes_status
+          expression: instruction
+          value: instructions/only-vmo-writes-status.instructions.md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/epics/{unit_id}.md
+          id: output_unit_id_md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/epics/{unit_id}-lbc.md
+          id: output_unit_id_lbc_md
+        - kind: postcondition
+          type: content
+          id: hypothesis_and_wsjf_present
+          expression: cel
+          value: has(unit.wsjf)
+        - kind: postcondition
+          type: transition
+          id: status_committed_reviewing
+          expression: cel
+          value: status == "reviewing"
+    - id: architect-epic
+      kind: delegate
+      delegates_to: workflows/architectural-vision
+      actor: "@value-management-officier"
+      conditions:
+        - kind: precondition
+          type: after
+          expression: ref
+          value: shape-epic
+          id: after_shape_epic
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/epics/{unit_id}.md
+          id: input_unit_id_md
+        - kind: precondition
+          type: state
+          id: epic_in_reviewing
+          expression: cel
+          value: status == "reviewing"
+        - kind: precondition
+          type: state
+          id: no_replay_triggering_enabler_seeded
+          expression: cel
+          value: has(unit.attestations) && has(unit.attestations.no_replay_triggering_enabler_seeded) && unit.attestations.no_replay_triggering_enabler_seeded
+        - kind: invariant
+          type: authority
+          id: only_vmo_writes_status
+          expression: instruction
+          value: instructions/only-vmo-writes-status.instructions.md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/epics/{unit_id}.md
+          id: output_unit_id_md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/architecture/runway-register.md
+          id: output_runway_register_md
+        - kind: postcondition
+          type: content
+          id: runway_and_nfr_backbone_present
+          expression: cel
+          value: has(unit.attestations) && has(unit.attestations.runway_and_nfr_backbone_present) && unit.attestations.runway_and_nfr_backbone_present
+        - kind: postcondition
+          type: transition
+          id: status_committed_analyzing
+          expression: cel
+          value: status == "analyzing"
+    - id: epic-gate
+      kind: gate
+      gate: ★ Epic Gate
+      actor: central-supervisor (Business-Owner hat)
+      conditions:
+        - kind: precondition
+          type: after
+          expression: ref
+          value: architect-epic
+          id: after_architect_epic
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/epics/{unit_id}.md
+          id: input_unit_id_md
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/epics/{unit_id}-lbc.md
+          id: input_unit_id_lbc_md
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/kanban/portfolio.md
+          id: input_portfolio_md
+        - kind: precondition
+          type: state
+          id: epic_analyzing_refined_board_published
+          expression: cel
+          value: status == "analyzing"
+        - kind: precondition
+          type: state
+          id: no_open_blocking_items
+          expression: cel
+          value: open_items_clear
+        - kind: invariant
+          type: authority
+          id: human_decides_gate
+          expression: instruction
+          value: instructions/human-decides-gate.instructions.md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/gate-decisions.md
+          id: output_gate_decisions_md
+        - kind: postcondition
+          type: transition
+          id: gate_verdict_recorded
+          expression: cel
+          value: has(unit.attestations) && has(unit.attestations.gate_verdict_recorded) && unit.attestations.gate_verdict_recorded
+    - id: start-implementing
+      kind: direct
+      actor: "@value-management-officier"
+      conditions:
+        - kind: precondition
+          type: after
+          expression: ref
+          value: epic-gate
+          id: after_epic_gate
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/{product}/features/
+          id: input_features
+        - kind: precondition
+          type: state
+          id: first_child_feature_funnel
+          expression: cel
+          value: size(child_features) >= 1
+        - kind: invariant
+          type: authority
+          id: only_vmo_writes_status
+          expression: instruction
+          value: instructions/only-vmo-writes-status.instructions.md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/kanban/portfolio.md
+          id: output_portfolio_md
+        - kind: postcondition
+          type: transition
+          id: status_committed_implementing
+          expression: cel
+          value: status == "implementing"
+    - id: epic-outcome-gate
+      kind: gate
+      gate: ★ Epic Outcome Gate
+      actor: central-supervisor (Business-Owner hat)
+      conditions:
+        - kind: precondition
+          type: after
+          expression: ref
+          value: start-implementing
+          id: after_start_implementing
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/{product}/features/
+          id: input_features
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/epics/{unit_id}.md
+          id: input_unit_id_md
+        - kind: precondition
+          type: state
+          id: last_child_feature_done
+          expression: cel
+          value: size(child_features) >= 1 && child_features.all(c, c.status == "done")
+        - kind: invariant
+          type: authority
+          id: human_decides_gate
+          expression: instruction
+          value: instructions/human-decides-gate.instructions.md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/gate-decisions.md
+          id: output_gate_decisions_md
+        - kind: postcondition
+          type: output
+          expression: ref
+          value: portfolio/epics/{unit_id}.md
+          id: output_unit_id_md
+        - kind: postcondition
+          type: transition
+          id: outcome_accepted_and_cost_committed
+          expression: cel
+          value: status == "done" && has(unit.cost)
+        - kind: invariant
+          type: content
+          id: epic_cost_snapshot_measured_once_from_logs
+          expression: instruction
+          value: instructions/epic-cost-snapshot-measured-once-from-logs.instructions.md

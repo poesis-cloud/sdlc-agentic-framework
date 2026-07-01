@@ -1,0 +1,430 @@
+workflow:
+  version: 2
+  id: art
+  rank: root
+  drives: feature
+  facilitator: '@release-train-engineer'
+  skills: [orchestration-core, art-orchestration]
+  fsm:
+  - funnel
+  - refined
+  - arch-pending
+  - ready
+  - committed
+  - in-progress
+  - done
+  - blocked
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  recurring_suborchestrations:
+  - art-sync
+  - inspect-and-adapt
+  steps:
+  - id: derive-feature
+    kind: delegate
+    delegates_to: workflows/feature-backlog-refinement
+    actor: '@release-train-engineer'
+    conditions:
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/epics/
+      id: input_epics
+    - kind: precondition
+      type: content
+      id: approved_epic_provided
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.approved_epic_provided) && unit.attestations.approved_epic_provided
+    - kind: invariant
+      type: authority
+      id: only_rte_writes_status
+      expression: instruction
+      value: instructions/only-rte-writes-status.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: output_unit_id_md
+    - kind: postcondition
+      type: content
+      id: parent_epic_present
+      expression: cel
+      value: has(unit.parent_epic)
+    - kind: postcondition
+      type: content
+      id: feature_typed_business_or_enabler
+      expression: cel
+      value: has(unit.type) && (unit.type == "business" || unit.type == "enabler")
+    - kind: postcondition
+      type: transition
+      id: status_committed_funnel
+      expression: cel
+      value: status == "funnel"
+  - id: refine-feature
+    kind: delegate
+    delegates_to: workflows/feature-backlog-refinement
+    actor: '@release-train-engineer'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: derive-feature
+      id: after_derive_feature
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: feature_in_funnel
+      expression: cel
+      value: status == "funnel"
+    - kind: invariant
+      type: authority
+      id: only_rte_writes_status
+      expression: instruction
+      value: instructions/only-rte-writes-status.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: output_unit_id_md
+    - kind: postcondition
+      type: content
+      id: ac_and_wsjf_present
+      expression: cel
+      value: has(unit.wsjf)
+    - kind: postcondition
+      type: content
+      id: refinement_roster_exercised
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.refinement_roster_exercised) && unit.attestations.refinement_roster_exercised
+    - kind: postcondition
+      type: transition
+      id: status_committed_refined
+      expression: cel
+      value: status == "refined"
+  - id: feature-gate
+    kind: gate
+    gate: ★ Feature Gate
+    actor: '@release-train-engineer'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: refine-feature
+      id: after_refine_feature
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/kanban/program.md
+      id: input_program_md
+    - kind: precondition
+      type: state
+      id: feature_refined
+      expression: cel
+      value: status == "refined"
+    - kind: precondition
+      type: state
+      id: no_open_blocking_items
+      expression: cel
+      value: open_items_clear
+    - kind: invariant
+      type: authority
+      id: feature_gate_rte_run_escalate_if_structurant
+      expression: instruction
+      value: instructions/feature-gate-rte-run-escalate-if-structurant.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/gate-decisions.md
+      id: output_gate_decisions_md
+    - kind: postcondition
+      type: transition
+      id: feature_gate_verdict_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.feature_gate_verdict_recorded) && unit.attestations.feature_gate_verdict_recorded
+  - id: extend-runway
+    kind: delegate
+    delegates_to: workflows/architectural-runway-extension
+    actor: '@release-train-engineer'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: feature-gate
+      id: after_feature_gate
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: feature_is_structurant_else_trivial
+      expression: cel
+      value: '!(has(unit.structurant) && unit.structurant) || status == "arch-pending"'
+    - kind: invariant
+      type: authority
+      id: only_rte_writes_status_architecture_stays_sa_owned
+      expression: instruction
+      value: instructions/only-rte-writes-status-architecture-stays-sa-owned.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: output_unit_id_md
+    - kind: postcondition
+      type: content
+      id: architecture_pass_packet_committed
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.architecture_pass_packet_committed) && unit.attestations.architecture_pass_packet_committed
+  - id: architecture-gate
+    kind: gate
+    gate: ★ Architecture Gate
+    actor: central-supervisor (Enterprise-Architect hat)
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: extend-runway
+      id: after_extend_runway
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: inventory_gate_complete_else_trivial
+      expression: cel
+      value: inventory_complete
+    - kind: precondition
+      type: state
+      id: no_open_blocking_items
+      expression: cel
+      value: open_items_clear
+    - kind: invariant
+      type: authority
+      id: human_decides_gate
+      expression: instruction
+      value: instructions/human-decides-gate.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/gate-decisions.md
+      id: output_gate_decisions_md
+    - kind: postcondition
+      type: transition
+      id: architecture_gate_verdict_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.architecture_gate_verdict_recorded) && unit.attestations.architecture_gate_verdict_recorded
+  - id: plan-pi
+    kind: delegate
+    delegates_to: workflows/pi-planning
+    actor: '@release-train-engineer'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: architecture-gate
+      id: after_architecture_gate
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: feature_ready
+      expression: cel
+      value: status == "ready"
+    - kind: precondition
+      type: state
+      id: dependencies_met
+      expression: cel
+      value: depends_on_met
+    - kind: invariant
+      type: authority
+      id: only_rte_writes_status
+      expression: instruction
+      value: instructions/only-rte-writes-status.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/kanban/program.md
+      id: output_program_md
+    - kind: postcondition
+      type: content
+      id: pi_objectives_risks_and_dispatch_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.pi_objectives_risks_and_dispatch_recorded) && unit.attestations.pi_objectives_risks_and_dispatch_recorded
+    - kind: postcondition
+      type: transition
+      id: status_committed_committed
+      expression: cel
+      value: status == "committed"
+  - id: start-implementing
+    kind: direct
+    actor: '@release-train-engineer'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: plan-pi
+      id: after_plan_pi
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: feature_committed
+      expression: cel
+      value: status == "committed"
+    - kind: precondition
+      type: state
+      id: first_child_story_ready
+      expression: cel
+      value: size(child_stories) >= 1
+    - kind: invariant
+      type: authority
+      id: only_rte_writes_status
+      expression: instruction
+      value: instructions/only-rte-writes-status.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/kanban/program.md
+      id: output_program_md
+    - kind: postcondition
+      type: transition
+      id: status_committed_in_progress
+      expression: cel
+      value: status == "in-progress"
+  - id: pr-gate
+    kind: gate
+    gate: ★ PR Gate
+    actor: central-supervisor (Business-Owner hat)
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: start-implementing
+      id: after_start_implementing
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: child_story_awaiting_pr_staged
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.child_story_awaiting_pr_staged) && unit.attestations.child_story_awaiting_pr_staged
+    - kind: invariant
+      type: authority
+      id: human_decides_gate_rte_merges
+      expression: instruction
+      value: instructions/human-decides-gate-rte-merges.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/gate-decisions.md
+      id: output_gate_decisions_md
+    - kind: postcondition
+      type: transition
+      id: child_story_merged_and_rolled_up
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.child_story_merged_and_rolled_up) && unit.attestations.child_story_merged_and_rolled_up
+  - id: demo
+    kind: delegate
+    delegates_to: workflows/system-demo
+    actor: '@release-train-engineer'
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: pr-gate
+      id: after_pr_gate
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: feature_in_progress
+      expression: cel
+      value: status == "in-progress"
+    - kind: precondition
+      type: state
+      id: all_child_stories_done
+      expression: cel
+      value: all_children_done
+    - kind: precondition
+      type: state
+      id: child_qa_signoffs_present
+      expression: cel
+      value: child_qa_signoffs_present
+    - kind: invariant
+      type: authority
+      id: only_rte_writes_status
+      expression: instruction
+      value: instructions/only-rte-writes-status.instructions.md
+    - kind: postcondition
+      type: content
+      id: increment_staged_for_demo_gate
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.increment_staged_for_demo_gate) && unit.attestations.increment_staged_for_demo_gate
+  - id: demo-gate
+    kind: gate
+    gate: ★ Demo Gate
+    actor: central-supervisor (Business-Owner hat)
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: demo
+      id: after_demo
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: feature_in_progress_children_done
+      expression: cel
+      value: status == "in-progress" && all_children_done
+    - kind: precondition
+      type: state
+      id: gate_packet_ok
+      expression: cel
+      value: gate_packet_ok
+    - kind: invariant
+      type: authority
+      id: human_decides_gate
+      expression: instruction
+      value: instructions/human-decides-gate.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/gate-decisions.md
+      id: output_gate_decisions_md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+      id: output_unit_id_md
+    - kind: postcondition
+      type: transition
+      id: demo_accepted_cost_committed_and_vmo_notified
+      expression: cel
+      value: status == "done" && has(unit.cost)

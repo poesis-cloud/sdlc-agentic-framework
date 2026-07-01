@@ -48,19 +48,19 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Check Apache-2.0 headers on plugins/ files
+            - name: Check Apache-2.0 headers on shipped files
               run: |
                   MISSING=""
                   while IFS= read -r -d '' f; do
                     if ! grep -q "Copyright 2026 Poesis Cloud" "$f"; then
                       MISSING="$MISSING\n  $f"
                     fi
-                  done < <(find plugins/ \( -name '*.md' -o -name '*.yaml' \) -print0 2>/dev/null)
+                  done < <(find layers harness sync \( -name '*.md' -o -name '*.yaml' \) -print0 2>/dev/null)
                   if [ -n "$MISSING" ]; then
                     printf "ERROR: missing Apache-2.0 header in:%b\n" "$MISSING"
                     exit 1
                   fi
-                  echo "OK: all plugins/ files carry the Apache-2.0 header"
+                  echo "OK: all shipped files carry the Apache-2.0 header"
 
     scrub-withhold:
         name: WITHHOLD Scrub
@@ -69,28 +69,32 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Scan plugins/ for WITHHOLD keywords
-              # Fail-closed: any keyword hit from WITHHOLD-keywords.txt in plugins/ fails the build.
+            - name: Scan shipped content for WITHHOLD keywords
+              # Fail-closed: any keyword hit from WITHHOLD-keywords.txt in shipped content fails the build.
               # See WITHHOLD-keywords.txt for the corpus and SHIP manifest.
               run: |
                   if [ ! -f WITHHOLD-keywords.txt ]; then
                     echo "ERROR: WITHHOLD-keywords.txt not found — fail-closed"
                     exit 1
                   fi
-                  if [ ! -d plugins/ ]; then
-                    echo "OK: no plugins/ directory — nothing to scan"
+                  SCAN_DIRS=""
+                  for d in layers harness sync; do
+                    [ -d "$d" ] && SCAN_DIRS="$SCAN_DIRS $d"
+                  done
+                  if [ -z "$SCAN_DIRS" ]; then
+                    echo "OK: no shipped content directories — nothing to scan"
                     exit 0
                   fi
                   HITS=""
                   while IFS= read -r kw; do
                     [[ "$kw" =~ ^#.*$ || -z "$kw" ]] && continue
-                    matches=$(grep -r -i -l "$kw" plugins/ 2>/dev/null || true)
+                    matches=$(grep -r -i -l "$kw" $SCAN_DIRS 2>/dev/null || true)
                     if [ -n "$matches" ]; then
                       HITS="$HITS\n  keyword='$kw' in: $matches"
                     fi
                   done < WITHHOLD-keywords.txt
                   if [ -n "$HITS" ]; then
-                    printf "ERROR: WITHHOLD keyword hits in plugins/:%b\n" "$HITS"
+                    printf "ERROR: WITHHOLD keyword hits in shipped content:%b\n" "$HITS"
                     exit 1
                   fi
-                  echo "OK: zero WITHHOLD keyword hits in plugins/"
+                  echo "OK: zero WITHHOLD keyword hits in shipped content"

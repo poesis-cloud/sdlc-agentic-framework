@@ -1,0 +1,194 @@
+workflow:
+  version: 2
+  id: epic-lean-business-case
+  rank: suborchestration
+  kind: practice
+  parent: lpm
+  facilitator: '@value-management-officier'
+  skills: [epic-lean-business-case]
+  cdp_stage: continuous-exploration
+  delivers:
+  - epic
+  - lean-business-case
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  steps:
+  - id: discovery-and-draft
+    kind: author
+    actor: '@business-owner'
+    output: epic-lean-business-case
+    conditions:
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/strategic-themes.md
+      id: input_strategic_themes_md
+    - kind: precondition
+      type: input
+      expression: ref
+      value: layers/portfolio/actors/business-owner/artifacts/epic.artifact-template.md
+      id: input_epic_artifact_template_md
+    - kind: precondition
+      type: input
+      expression: ref
+      value: layers/portfolio/actors/business-owner/artifacts/lean-business-case.artifact-template.md
+      id: input_lean_business_case_artifact_template_md
+    - kind: invariant
+      type: authority
+      id: only_owner_writes_epic_content
+      expression: instruction
+      value: instructions/only-owner-writes-epic-content.instructions.md
+    - kind: invariant
+      type: clarification
+      id: discovery_open_items_recorded_or_explicitly_none
+      expression: instruction
+      value: instructions/discovery-open-items-recorded-or-explicitly-none.instructions.md
+    - kind: postcondition
+      type: content
+      id: epic_lbc_json_drafted
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.epic_lbc_json_drafted) && unit.attestations.epic_lbc_json_drafted
+    - kind: postcondition
+      type: content
+      id: hypothesis_wsjf_indicators_mvp_drafted
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.hypothesis_wsjf_indicators_mvp_drafted) && unit.attestations.hypothesis_wsjf_indicators_mvp_drafted
+    - kind: postcondition
+      type: content
+      id: strategic_theme_trace_present
+      expression: cel
+      value: has(unit.strategic_theme)
+    - kind: postcondition
+      type: content
+      id: work_item_relations_classified
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.work_item_relations_classified) && unit.attestations.work_item_relations_classified
+  - id: ea-challenge
+    kind: challenge
+    actor: '@enterprise-architect'
+    output: architecture-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: discovery-and-draft
+      id: after_discovery_and_draft
+    - kind: precondition
+      type: content
+      id: working_artifacts_available
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.working_artifacts_available) && unit.attestations.working_artifacts_available
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: invariant
+      type: challenge
+      id: enterprise_architect_runway_challenge_recorded
+      expression: instruction
+      value: instructions/enterprise-architect-runway-challenge-recorded.instructions.md
+    - kind: postcondition
+      type: content
+      id: challenge_open_items_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.challenge_open_items_recorded) && unit.attestations.challenge_open_items_recorded
+  - id: security-challenge
+    kind: challenge
+    actor: '@security-expert'
+    output: security-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: discovery-and-draft
+      id: after_discovery_and_draft
+    - kind: precondition
+      type: content
+      id: working_artifacts_available
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.working_artifacts_available) && unit.attestations.working_artifacts_available
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: invariant
+      type: challenge
+      id: security_risk_challenge_recorded
+      expression: instruction
+      value: instructions/security-risk-challenge-recorded.instructions.md
+    - kind: postcondition
+      type: content
+      id: challenge_open_items_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.challenge_open_items_recorded) && unit.attestations.challenge_open_items_recorded
+  - id: owner-rewrite
+    kind: author
+    actor: '@business-owner'
+    output: epic-lean-business-case
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: ea-challenge
+      id: after_ea_challenge
+    - kind: precondition
+      type: after
+      expression: ref
+      value: security-challenge
+      id: after_security_challenge
+    - kind: precondition
+      type: content
+      id: challenge_open_items_available
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.challenge_open_items_available) && unit.attestations.challenge_open_items_available
+    - kind: invariant
+      type: authority
+      id: only_owner_writes_epic_content
+      expression: instruction
+      value: instructions/only-owner-writes-epic-content.instructions.md
+    - kind: postcondition
+      type: content
+      id: owner_rewrite_completed_after_challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.owner_rewrite_completed_after_challenge) && unit.attestations.owner_rewrite_completed_after_challenge
+    - kind: postcondition
+      type: state
+      id: blocking_open_items_resolved_or_deferred
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.blocking_open_items_resolved_or_deferred) && unit.attestations.blocking_open_items_resolved_or_deferred
+  - id: render-md
+    kind: render
+    actor: '@business-owner'
+    output: epic-lean-business-case
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: owner-rewrite
+      id: after_owner_rewrite
+    - kind: precondition
+      type: content
+      id: rewritten_json_is_render_source
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.rewritten_json_is_render_source) && unit.attestations.rewritten_json_is_render_source
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/epics/{unit_id}.md
+      id: output_unit_id_md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/epics/{unit_id}-lbc.md
+      id: output_unit_id_lbc_md
+    - kind: postcondition
+      type: consistency
+      id: md_render_matches_json_sections
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.md_render_matches_json_sections) && unit.attestations.md_render_matches_json_sections
+    - kind: postcondition
+      type: state
+      id: ready_for_vmo_commit
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.ready_for_vmo_commit) && unit.attestations.ready_for_vmo_commit

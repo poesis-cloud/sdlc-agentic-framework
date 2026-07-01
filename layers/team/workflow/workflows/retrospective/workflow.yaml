@@ -1,0 +1,40 @@
+workflow:
+  version: 2
+  id: retrospective
+  rank: suborchestration
+  kind: ceremony
+  parent: scrum
+  facilitator: '@scrum-master'
+  skills: [retrospective]
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  steps:
+  - id: triage
+    kind: author
+    actor: '@scrum-master'
+    output: retro
+    conditions:
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/
+      id: input_features
+    - kind: precondition
+      type: state
+      id: story_done
+      expression: cel
+      value: status == "done"
+    - kind: postcondition
+      type: content
+      id: sprint_scope_pain_points_root_caused
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.sprint_scope_pain_points_root_caused) && unit.attestations.sprint_scope_pain_points_root_caused
+    - kind: postcondition
+      type: content
+      id: workflow_improvement_ledger_triaged
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.workflow_improvement_ledger_triaged) && unit.attestations.workflow_improvement_ledger_triaged
+    - kind: postcondition
+      type: content
+      id: retro_committed
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.retro_committed) && unit.attestations.retro_committed

@@ -1,0 +1,151 @@
+workflow:
+  version: 2
+  id: architectural-vision
+  rank: suborchestration
+  kind: practice
+  parent: lpm
+  cdp_stage: continuous-exploration
+  facilitator: '@value-management-officier'
+  skills: [architectural-vision]
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  steps:
+  - id: ea-draft
+    kind: author
+    actor: '@enterprise-architect'
+    output: architectural-vision
+    conditions:
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/epics/{unit_id}.md
+      id: input_unit_id_md
+    - kind: precondition
+      type: state
+      id: epic_in_reviewing
+      expression: cel
+      value: status == "reviewing"
+    - kind: postcondition
+      type: content
+      id: enterprise_architect_output_committed
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.enterprise_architect_output_committed) && unit.attestations.enterprise_architect_output_committed
+    - kind: postcondition
+      type: content
+      id: feature_seeds_and_target_arts_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.feature_seeds_and_target_arts_recorded) && unit.attestations.feature_seeds_and_target_arts_recorded
+    - kind: postcondition
+      type: content
+      id: enabler_epic_seeds_or_deferrals_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.enabler_epic_seeds_or_deferrals_recorded) && unit.attestations.enabler_epic_seeds_or_deferrals_recorded
+  - id: challenge-value
+    kind: challenge
+    actor: '@business-owner'
+    output: value-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: ea-draft
+      id: after_ea_draft
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: business_owner_value_challenge_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.business_owner_value_challenge_recorded) && unit.attestations.business_owner_value_challenge_recorded
+  - id: challenge-security-nfr
+    kind: challenge
+    actor: '@security-expert'
+    output: security-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: ea-draft
+      id: after_ea_draft
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: security_nfr_challenge_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.security_nfr_challenge_recorded) && unit.attestations.security_nfr_challenge_recorded
+  - id: challenge-operability
+    kind: challenge
+    actor: '@operator'
+    output: operability-review
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: ea-draft
+      id: after_ea_draft
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: operator_infrastructure_challenge_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.operator_infrastructure_challenge_recorded) && unit.attestations.operator_infrastructure_challenge_recorded
+  - id: owner-rewrite
+    kind: author
+    actor: '@enterprise-architect'
+    output: architectural-vision
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: challenge-value
+      id: after_challenge_value
+    - kind: precondition
+      type: after
+      expression: ref
+      value: challenge-security-nfr
+      id: after_challenge_security_nfr
+    - kind: precondition
+      type: after
+      expression: ref
+      value: challenge-operability
+      id: after_challenge_operability
+    - kind: postcondition
+      type: content
+      id: owner_rewrite_completed_after_challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.owner_rewrite_completed_after_challenge) && unit.attestations.owner_rewrite_completed_after_challenge
+    - kind: postcondition
+      type: state
+      id: replay_required_classified
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.replay_required_classified) && unit.attestations.replay_required_classified
+  - id: render
+    kind: render
+    actor: '@enterprise-architect'
+    output: architectural-vision
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: owner-rewrite
+      id: after_owner_rewrite
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/architecture/runway-register.md
+      id: output_runway_register_md
+    - kind: postcondition
+      type: state
+      id: ready_for_vmo_commit
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.ready_for_vmo_commit) && unit.attestations.ready_for_vmo_commit

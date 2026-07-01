@@ -1,0 +1,59 @@
+workflow:
+  version: 2
+  id: verification
+  rank: suborchestration
+  kind: practice
+  parent: scrum
+  facilitator: "@scrum-master"
+  skills: [verification]
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  steps:
+    - id: verify
+      kind: verify
+      actor: "@quality-engineer"
+      conditions:
+        - kind: precondition
+          type: input
+          expression: ref
+          value: portfolio/{product}/features/
+          id: input_features
+        - kind: precondition
+          type: state
+          id: story_in_qa
+          expression: cel
+          value: status == "in-qa"
+        - kind: invariant
+          type: authority
+          id: verifier_writes_no_owner_content
+          expression: instruction
+          value: instructions/verifier-writes-no-owner-content.instructions.md
+        - kind: postcondition
+          type: content
+          id: acceptance_criteria_and_dod_verified
+          expression: cel
+          value: has(unit.attestations) && has(unit.attestations.acceptance_criteria_and_dod_verified) && unit.attestations.acceptance_criteria_and_dod_verified
+        - kind: postcondition
+          type: content
+          id: qa_signoff_committed_on_pass_or_bug_report_on_fail
+          expression: cel
+          value: has(unit.attestations) && has(unit.attestations.qa_signoff_committed_on_pass_or_bug_report_on_fail) && unit.attestations.qa_signoff_committed_on_pass_or_bug_report_on_fail
+        - kind: postcondition
+          type: content
+          id: security_verdict_recorded
+          expression: cel
+          value: has(unit.attestations) && has(unit.attestations.security_verdict_recorded) && unit.attestations.security_verdict_recorded
+        - kind: postcondition
+          type: transition
+          id: story_cost_committed_once
+          expression: cel
+          value: has(unit.cost)
+        - kind: invariant
+          type: content
+          id: story_cost_snapshot_measured_once_from_logs
+          expression: instruction
+          value: instructions/story-cost-snapshot-measured-once-from-logs.instructions.md
+        - kind: postcondition
+          type: transition
+          id: board_publication_prepared_for_pr_gate
+          expression: cel
+          value: has(unit.attestations) && has(unit.attestations.board_publication_prepared_for_pr_gate) && unit.attestations.board_publication_prepared_for_pr_gate

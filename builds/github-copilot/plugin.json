@@ -1,0 +1,37 @@
+{
+    "$license": "Copyright 2026 Poesis Cloud and contributors — Apache License, Version 2.0 — http://www.apache.org/licenses/LICENSE-2.0",
+    "name": "poesis-safe-agentic-framework",
+    "version": "0.1.0",
+    "description": "SAFe-shaped SDLC orchestration — portfolio/program/iteration orchestrators, specialist bench, and model routing",
+    "publisher": "poesis-cloud",
+    "license": "Apache-2.0",
+    "repository": "https://github.com/poesis-cloud/safe-agentic-framework",
+    "prerequisites": [],
+    "agents": [
+        "layers/portfolio/actors/business-owner/business-owner.agent.md",
+        "layers/portfolio/actors/enterprise-architect/enterprise-architect.agent.md",
+        "layers/portfolio/actors/value-management-officier/value-management-officier.agent.md",
+        "layers/program/actors/product-manager/product-manager.agent.md",
+        "layers/program/actors/release-train-engineer/release-train-engineer.agent.md",
+        "layers/program/actors/system-architect/system-architect.agent.md",
+        "layers/team/actors/developer/developer.agent.md",
+        "layers/team/actors/operator/operator.agent.md",
+        "layers/team/actors/product-owner/product-owner.agent.md",
+        "layers/team/actors/quality-engineer/quality-engineer.agent.md",
+        "layers/team/actors/scrum-master/scrum-master.agent.md",
+        "layers/team/actors/security-expert/security-expert.agent.md",
+        "layers/team/actors/tech-writer/tech-writer.agent.md",
+        "layers/team/actors/ux-designer/ux-designer.agent.md"
+    ],
+    "skills": [
+        "layers/portfolio/actors/value-management-officier/value-management-officier.skill.md",
+        "layers/program/actors/release-train-engineer/release-train-engineer.skill.md",
+        "layers/team/actors/scrum-master/scrum-master.skill.md",
+        "layers/portfolio/actors/business-owner/business-owner.skill.md",
+        "layers/portfolio/actors/enterprise-architect/enterprise-architect.skill.md",
+        "layers/program/actors/product-manager/product-manager.skill.md",
+        "layers/program/actors/product-manager-author/product-manager-author.skill.md",
+        "layers/team/actors/product-owner/product-owner.skill.md",
+        "layers/program/actors/system-architect/system-architect.skill.md"
+    ]
+}

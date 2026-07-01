@@ -1,0 +1,178 @@
+---
+# CD — package & publish the GitHub Copilot customization plugin.
+#
+# The repository root is the host-agnostic source. CD renders a staged GitHub Copilot bundle
+# from builds/github-copilot/plugin.json + builds/github-copilot/tools.map.yaml, injects the
+# target `tools:` frontmatter into agent manifests, runs the packaging gate on that staged bundle,
+# then zips it into a single top-level install folder named after the plugin and publishes it as
+# the installable GitHub Copilot artifact.
+#
+# Triggers:
+#   - push a tag v*      → packaging gate, then publish a GitHub Release asset
+#   - workflow_dispatch  → packaging gate + build, upload a workflow artifact only
+
+name: cd
+
+on:
+    push:
+        tags:
+            - "v*"
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    verify-bundle:
+        name: Packaging gate
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install harness test dependencies
+                            run: pip install --quiet -r harness/requirements-dev.txt
+
+                        - name: Render GitHub Copilot bundle
+                            run: |
+                                    BUNDLE="$RUNNER_TEMP/github-copilot-bundle"
+                                    python3 builds/github-copilot/render_bundle.py . "$BUNDLE"
+                                    echo "BUNDLE=$BUNDLE" >> "$GITHUB_ENV"
+
+            - name: Validate plugin.json manifest
+                # Packaging gate: every agents[]/skills[] path
+              # resolves, and no enumerated skill points into a workflows/ sub-workflow
+              # (Design Invariant 7 — a sub-orchestration is path-loaded, not matched).
+              run: |
+                  python3 - "$BUNDLE" <<'PY'
+                  import json
+                  import pathlib
+                  import sys
+
+                  root = pathlib.Path(sys.argv[1])
+                  manifest = json.loads((root / "plugin.json").read_text())
+                  errors = []
+
+                  for key in ("agents", "skills"):
+                      for rel in manifest.get(key, []):
+                          if not (root / rel).is_file():
+                              errors.append(f"{key}[]: missing file {rel}")
+
+                  for rel in manifest.get("skills", []):
+                      if "/workflows/" in rel:
+                          errors.append(
+                              f"skills[]: enumerated skill points into a sub-workflow: {rel}"
+                          )
+
+                  if errors:
+                      print("PACKAGING GATE FAILED:")
+                      for err in errors:
+                          print(f"  - {err}")
+                      sys.exit(1)
+
+                  print(
+                      f"OK: {len(manifest['agents'])} agents + "
+                      f"{len(manifest['skills'])} skills resolve; "
+                      "no sub-workflow enumerated"
+                  )
+                  PY
+
+            - name: Verify bundled harness (constitution gate)
+              run: make -C "$BUNDLE/harness" verify
+
+    package:
+        name: Package & publish
+        needs: verify-bundle
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+                        - name: Install build dependencies
+                            run: pip install --quiet -r harness/requirements-dev.txt
+
+                        - name: Render GitHub Copilot bundle
+                            run: |
+                                    BUNDLE="$RUNNER_TEMP/github-copilot-bundle"
+                                    python3 builds/github-copilot/render_bundle.py . "$BUNDLE"
+                                    echo "BUNDLE=$BUNDLE" >> "$GITHUB_ENV"
+
+            - name: Read plugin metadata
+              id: meta
+              run: |
+                  VERSION=$(python3 -c "import json; print(json.load(open('$BUNDLE/plugin.json'))['version'])")
+                  NAME=$(python3 -c "import json; print(json.load(open('$BUNDLE/plugin.json'))['name'])")
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+                  echo "name=$NAME" >> "$GITHUB_OUTPUT"
+                  echo "artifact=$NAME-$VERSION" >> "$GITHUB_OUTPUT"
+
+            - name: Tag / version coherence check
+              if: startsWith(github.ref, 'refs/tags/')
+              # The canonical version lives in plugin.json; a release tag must match it.
+              run: |
+                  TAG="${GITHUB_REF_NAME#v}"
+                  if [ "$TAG" != "${{ steps.meta.outputs.version }}" ]; then
+                    echo "ERROR: tag v$TAG != plugin.json version ${{ steps.meta.outputs.version }}"
+                    echo "Bump plugin.json version (the canonical source) and re-tag."
+                    exit 1
+                  fi
+                  echo "OK: tag matches plugin.json version ${{ steps.meta.outputs.version }}"
+
+            - name: Build plugin zip
+              # The repository root is packaged into a single top-level install folder
+              # named after the plugin (plugin.json `name`). Exclude VCS/CI/build cruft.
+              # Built with Python's zipfile (no apt `zip` dependency; deterministic, testable).
+              run: |
+                  python3 - "$BUNDLE" "dist/${{ steps.meta.outputs.artifact }}.zip" "${{ steps.meta.outputs.name }}" <<'PY'
+                  import os
+                  import sys
+                  import zipfile
+
+                  src = sys.argv[1].rstrip("/") or "."
+                  out = sys.argv[2]
+                  top = sys.argv[3]
+                  skip_dirs = {".pytest_cache", "__pycache__", "target", ".git", ".github", "dist"}
+                  os.makedirs(os.path.dirname(out), exist_ok=True)
+
+                  count = 0
+                  with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
+                      for root, dirs, files in os.walk(src):
+                          dirs[:] = sorted(d for d in dirs if d not in skip_dirs)
+                          for name in sorted(files):
+                              if name.endswith(".pyc"):
+                                  continue
+                              full = os.path.join(root, name)
+                              rel = os.path.relpath(full, src)
+                              if rel == "portfolio/logs" or rel.startswith("portfolio/logs/"):
+                                  continue
+                              zf.write(full, os.path.join(top, rel))
+                              count += 1
+                  print(f"built: {out} ({count} files, root {top}/)")
+                  PY
+
+            - name: Upload build artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ steps.meta.outputs.artifact }}
+                  path: dist/${{ steps.meta.outputs.artifact }}.zip
+                  if-no-files-found: error
+
+            - name: Publish GitHub Release
+              if: startsWith(github.ref, 'refs/tags/')
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: dist/${{ steps.meta.outputs.artifact }}.zip
+                  generate_release_notes: true
+                  fail_on_unmatched_files: true

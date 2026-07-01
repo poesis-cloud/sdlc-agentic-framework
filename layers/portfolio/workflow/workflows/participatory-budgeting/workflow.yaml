@@ -1,0 +1,120 @@
+workflow:
+  version: 2
+  id: participatory-budgeting
+  rank: suborchestration
+  kind: ceremony
+  parent: lpm
+  facilitator: '@value-management-officier'
+  skills: [participatory-budgeting]
+  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
+  steps:
+  - id: arguments-value
+    kind: challenge
+    actor: '@business-owner'
+    output: value-review
+    conditions:
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/portfolio.yaml
+      id: input_portfolio_yaml
+    - kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/epics/
+      id: input_epics
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: business_owner_value_and_wsjf_argument_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.business_owner_value_and_wsjf_argument_recorded) && unit.attestations.business_owner_value_and_wsjf_argument_recorded
+  - id: arguments-split
+    kind: challenge
+    actor: '@enterprise-architect'
+    output: architecture-review
+    conditions:
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: enterprise_architect_business_enabler_split_argument_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.enterprise_architect_business_enabler_split_argument_recorded) && unit.attestations.enterprise_architect_business_enabler_split_argument_recorded
+  - id: arguments-guardrails
+    kind: challenge
+    actor: '@security-expert'
+    output: security-review
+    conditions:
+    - kind: invariant
+      type: authority
+      id: challenger_writes_no_owner_content
+      expression: instruction
+      value: instructions/challenger-writes-no-owner-content.instructions.md
+    - kind: postcondition
+      type: challenge
+      id: security_risk_guardrails_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.security_risk_guardrails_recorded) && unit.attestations.security_risk_guardrails_recorded
+  - id: commit
+    kind: commit
+    actor: central-supervisor (Business-Owner hat)
+    output: budget-allocation
+    conditions:
+    - kind: precondition
+      type: after
+      expression: ref
+      value: arguments-value
+      id: after_arguments_value
+    - kind: precondition
+      type: after
+      expression: ref
+      value: arguments-split
+      id: after_arguments_split
+    - kind: precondition
+      type: after
+      expression: ref
+      value: arguments-guardrails
+      id: after_arguments_guardrails
+    - kind: invariant
+      type: authority
+      id: human_decides_allocation
+      expression: instruction
+      value: instructions/human-decides-allocation.instructions.md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/portfolio.yaml
+      id: output_portfolio_yaml
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/kanban/portfolio.md
+      id: output_portfolio_md
+    - kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/gate-decisions.md
+      id: output_gate_decisions_md
+    - kind: postcondition
+      type: transition
+      id: central_supervisor_allocation_commitment_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.central_supervisor_allocation_commitment_recorded) && unit.attestations.central_supervisor_allocation_commitment_recorded
+    - kind: postcondition
+      type: content
+      id: funded_epic_set_recorded
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.funded_epic_set_recorded) && unit.attestations.funded_epic_set_recorded
+    - kind: postcondition
+      type: content
+      id: capacity_overcommit_check_passed
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.capacity_overcommit_check_passed) && unit.attestations.capacity_overcommit_check_passed
