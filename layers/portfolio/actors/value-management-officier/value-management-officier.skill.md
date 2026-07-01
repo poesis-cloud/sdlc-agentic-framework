@@ -40,7 +40,7 @@ The VMO **polices** the portfolio layer: it controls the input/output artifacts 
 
 ## The Flow — Epic handling matrix
 
-The portfolio workflow **is the Epic FSM**: `funnel → reviewing → analyzing → portfolio-backlog → implementing → done` (flag `blocked`). The VMO is the **event loop** and the **only writer of Epic `status:`** — every sub-orchestration returns output, the VMO commits the transition. One matrix folds the flow, sub-orchestrations, and gates (kinds **D / Ceremony / Practice / Gate**; see *Orchestration core* below). **Step 0:** if `portfolio/` or the product is unregistered, run **Portfolio / ART Init** (below) first.
+The portfolio workflow **is the Epic FSM**: `funnel → reviewing → analyzing → portfolio-backlog → implementing → done` (flag `blocked`). The VMO is the **event loop** and **transition governor**; the Epic artifact (including `status:`) is authored by its owner (`@business-owner` for business, `@enterprise-architect` for enabler). One matrix folds the flow, sub-orchestrations, and gates (kinds **D / Ceremony / Practice / Gate**; see *Orchestration core* below). **Step 0:** if `portfolio/` or the product is unregistered, run **Portfolio / ART Init** (below) first.
 
 Before executing any ceremony or practice row, load that sub-orchestration skill plus its colocated `workflow.yaml`; the harness checks each step's `conditions` (`check-step`) and records every command to the per-run journal (`portfolio/logs/<run>.jsonl`) — the transition guard is the harness result, not orchestrator prose. The prose exchange explains how to facilitate; the workflow's `steps[].conditions` are the minimum evidence checklist — structural `after`/`input`/`output` refs the harness resolves + `cel` (pre/post) / `instruction` (invariant) judgments. If a condition fails or an `input`/`output` ref is missing, the row is incomplete and no status flip / gate staging may be claimed.
 
@@ -136,7 +136,7 @@ State lives only in `status:` frontmatter; **the git history of those flips is t
 
 There is **one event source — a unit's `status:`** (Epic / Feature / Story). The orchestrator is a **per-unit streamer**: it advances **one unit at a time** — pick a unit, evaluate the handlers whose trigger-predicate that unit satisfies, fire one, commit the new status, move to the next unit. Divide & conquer; never "gather a cohort," never wait on a clock (agentic has no wall clock and no fixed capacity, so batch windows are undefinable).
 
-A handler's **trigger** is a predicate on a **single unit** — its own state, its own children's states, and its own `depends_on`. Its **scope** is that unit (reading parent/sibling context read-only where needed). **Single-actuator invariant: only the orchestrator writes `status:`** — every other actor produces *output* that the orchestrator then commits. Four per-unit **handling** kinds:
+A handler's **trigger** is a predicate on a **single unit** — its own state, its own children's states, and its own `depends_on`. Its **scope** is that unit (reading parent/sibling context read-only where needed). **Owner-actuator invariant: the artifact owner writes `status:`; the orchestrator governs the transition guard and kanban projection** — every other actor produces *output* that routes through the owner-rewrite and guard path before transition commit. Four per-unit **handling** kinds:
 
 - **direct (D)** — the orchestrator commits the transition itself: mechanical edges, roll-ups, loop edges. No agents.
 - **ceremony** — a **sub-orchestration** that is a SAFe **event** (cadence/milestone): a facilitated multi-participant exchange producing output, returned to the orchestrator.
@@ -167,11 +167,9 @@ Workflow files use this shape (full schema: [workflow.schema.json](../../../../h
 
 ```yaml
 workflow:
-  version: 2
   id: <skill-name>
-  rank: root | suborchestration
   kind: ceremony | practice          # suborchestrations only; canonical noun is "suborchestration"
-  parent: <root-orchestration>       # suborchestrations only
+  parent: <root-orchestration>       # suborchestrations only (root ids: lpm / art / scrum)
   facilitator: <orchestrator>
   steps:
     - id: <step-id>
@@ -187,7 +185,7 @@ workflow:
 
 Each condition has four orthogonal attributes — `kind` (precondition/postcondition/invariant — WHEN), `type` (a judgment category authority/content/clarification/challenge/consistency/transition/state, or a structural dependency after/input/output), `expression` (`cel` harness-evaluated / `instruction` resolved structurally / `ref` structurally resolved), and `value` (the body) — plus an `id` on every condition. The harness checks structural refs directly, evaluates every precondition/postcondition's `cel` (a judgment the author attests rides `cel` as `unit.attestations.<id>`), and resolves every invariant's `instruction` obligation file (the agent follows it). They make the non-negotiable transition guard visible enough that the orchestrator cannot treat a participant roster or an evidence requirement as optional narrative.
 
-**Ceremonies and practices are facilitated sub-orchestrations.** Neither is solo work: each names its **Participants** (≥2, drawn from **the Bench** below) and an **Exchange** table that sequences their turns in the same `input → agent·hat → output` shape as the handlings: `# | participant·hat | contributes (reads → produces) | hands to`. The orchestrator is the **facilitator**: it opens the sub-orchestration, sequences the turns, and validates each output, but **authors nothing** — and is the **only writer of `status:`**, committing the unit's transition only after the sub-orchestration returns. Every participant authors only its own contribution per its role skill / bench role. The **Central Supervisor** joins only where a ★ gate or a pivot decision applies. Pick the participant roster systematically from the Bench, not just the owning hat.
+**Ceremonies and practices are facilitated sub-orchestrations.** Neither is solo work: each names its **Participants** (≥2, drawn from **the Bench** below) and an **Exchange** table that sequences their turns in the same `input → agent·hat → output` shape as the handlings: `# | participant·hat | contributes (reads → produces) | hands to`. The orchestrator is the **facilitator**: it opens the sub-orchestration, sequences the turns, and validates each output, but **authors nothing** — and does not directly rewrite owner artifacts; it commits transitions only through guard-approved, owner-authored state changes and flow-owned kanban/gate collation. Every participant authors only its own contribution per its role skill / bench role. The **Central Supervisor** joins only where a ★ gate or a pivot decision applies. Pick the participant roster systematically from the Bench, not just the owning hat.
 
 **Challenge-return loop (mandatory).** Whenever an existing artifact is challenged — by a peer hat inside a ceremony/practice, or by the **Central Supervisor at a ★ gate** (reject-with-reason) — the challenge output is never the final author-owned artifact unless the challenger is also the artifact owner. Challenge findings must flow back to the **owning author** for re-synthesis and rewrite of the owner artifact. The orchestrator may collect, classify, and collate challenge findings, but it must not directly patch or rewrite an author-owned artifact from challenger feedback. Its only legitimate post-challenge writes are flow-owned/meta artifacts such as gate collation, kanban, risk ledgers, or gate-decision backlog entries. If a challenge changes content, the next authoring turn belongs to the artifact owner. Each challenge finding is recorded as a `kind: challenge` entry in the unit's open-item ledger — same envelope, routing, and gate rule as a clarification, so challenges are formalized and persisted identically.
 

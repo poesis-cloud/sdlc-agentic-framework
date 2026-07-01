@@ -1,55 +1,19 @@
 workflow:
-  version: 2
   id: portfolio-sync
-  rank: suborchestration
   kind: ceremony
   parent: lpm
   facilitator: '@value-management-officier'
-  skills: [portfolio-sync]
-  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
   steps:
   - id: sync
     kind: author
     actor: '@value-management-officier'
     output: portfolio-sync-record
     conditions:
-    - kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/epics/
-      id: input_epics
-    - kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/kanban/portfolio.md
-      id: input_portfolio_md
-    - kind: invariant
-      type: clarification
-      id: business_owner_priority_or_risk_view_recorded
-      expression: instruction
-      value: instructions/business-owner-priority-or-risk-view-recorded.instructions.md
-    - kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/kanban/portfolio.md
-      id: output_portfolio_md
-    - kind: postcondition
-      type: content
-      id: epic_progress_rollup_recorded
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.epic_progress_rollup_recorded) && unit.attestations.epic_progress_rollup_recorded
-    - kind: postcondition
-      type: content
-      id: cross_art_dependency_state_recorded
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.cross_art_dependency_state_recorded) && unit.attestations.cross_art_dependency_state_recorded
-    - kind: postcondition
-      type: content
-      id: portfolio_risk_register_updated
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.portfolio_risk_register_updated) && unit.attestations.portfolio_risk_register_updated
-    - kind: postcondition
-      type: state
-      id: blocked_or_unblocked_reason_present
-      expression: cel
-      value: blocked_route_ok
+    - { id: input_epics, kind: precondition, type: input, expression: ref, value: 'portfolio/epics/' }
+    - { id: input_portfolio_md, kind: precondition, type: input, expression: ref, value: 'portfolio/kanban/portfolio.md' }
+    - { id: business_owner_priority_or_risk_view_recorded, kind: invariant, type: clarification, expression: instruction, value: 'instructions/business-owner-priority-or-risk-view-recorded.instructions.md' }
+    - { id: output_portfolio_md, kind: postcondition, type: output, expression: ref, value: 'portfolio/kanban/portfolio.md' }
+    - { id: epic_progress_rollup_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.epic_progress_rollup_recorded) && unit.attestations.epic_progress_rollup_recorded' }
+    - { id: cross_art_dependency_state_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.cross_art_dependency_state_recorded) && unit.attestations.cross_art_dependency_state_recorded' }
+    - { id: portfolio_risk_register_updated, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.portfolio_risk_register_updated) && unit.attestations.portfolio_risk_register_updated' }
+    - { id: blocked_or_unblocked_reason_present, kind: postcondition, type: state, expression: cel, value: 'blocked_route_ok' }

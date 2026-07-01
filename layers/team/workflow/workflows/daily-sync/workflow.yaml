@@ -1,40 +1,16 @@
 workflow:
-  version: 2
   id: daily-sync
-  rank: suborchestration
   kind: ceremony
   parent: scrum
   facilitator: '@scrum-master'
-  skills: [daily-sync]
-  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
   steps:
   - id: sync
     kind: author
     actor: '@scrum-master'
     output: daily
     conditions:
-    - kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
-      id: input_features
-    - kind: invariant
-      type: clarification
-      id: driver_navigator_status_recorded
-      expression: instruction
-      value: instructions/driver-navigator-status-recorded.instructions.md
-    - kind: postcondition
-      type: content
-      id: story_wip_and_blockers_walked
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.story_wip_and_blockers_walked) && unit.attestations.story_wip_and_blockers_walked
-    - kind: postcondition
-      type: state
-      id: blocked_or_unblocked_reason_present
-      expression: cel
-      value: blocked_route_ok
-    - kind: postcondition
-      type: content
-      id: daily_note_and_progress_committed
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.daily_note_and_progress_committed) && unit.attestations.daily_note_and_progress_committed
+    - { id: input_features, kind: precondition, type: input, expression: ref, value: 'portfolio/{product}/features/' }
+    - { id: driver_navigator_status_recorded, kind: invariant, type: clarification, expression: instruction, value: 'instructions/driver-navigator-status-recorded.instructions.md' }
+    - { id: story_wip_and_blockers_walked, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.story_wip_and_blockers_walked) && unit.attestations.story_wip_and_blockers_walked' }
+    - { id: blocked_or_unblocked_reason_present, kind: postcondition, type: state, expression: cel, value: 'blocked_route_ok' }
+    - { id: daily_note_and_progress_committed, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.daily_note_and_progress_committed) && unit.attestations.daily_note_and_progress_committed' }

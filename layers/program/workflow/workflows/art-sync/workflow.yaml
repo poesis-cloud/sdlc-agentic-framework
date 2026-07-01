@@ -1,45 +1,17 @@
 workflow:
-  version: 2
   id: art-sync
-  rank: suborchestration
   kind: ceremony
   parent: art
   facilitator: '@release-train-engineer'
-  skills: [art-sync]
-  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
   steps:
   - id: sync
     kind: commit
     actor: '@release-train-engineer'
     output: program-kanban
     conditions:
-    - kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
-      id: input_features
-    - kind: invariant
-      type: clarification
-      id: scope_architecture_operator_reconcile_recorded
-      expression: instruction
-      value: instructions/scope-architecture-operator-reconcile-recorded.instructions.md
-    - kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/kanban/program.md
-      id: output_program_md
-    - kind: postcondition
-      type: content
-      id: feature_progress_and_dependency_reconciled
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.feature_progress_and_dependency_reconciled) && unit.attestations.feature_progress_and_dependency_reconciled
-    - kind: postcondition
-      type: content
-      id: roam_risks_updated
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.roam_risks_updated) && unit.attestations.roam_risks_updated
-    - kind: postcondition
-      type: state
-      id: blocked_or_unblocked_reason_present
-      expression: cel
-      value: blocked_route_ok
+    - { id: input_features, kind: precondition, type: input, expression: ref, value: 'portfolio/{product}/features/' }
+    - { id: scope_architecture_operator_reconcile_recorded, kind: invariant, type: clarification, expression: instruction, value: 'instructions/scope-architecture-operator-reconcile-recorded.instructions.md' }
+    - { id: output_program_md, kind: postcondition, type: output, expression: ref, value: 'portfolio/{product}/kanban/program.md' }
+    - { id: feature_progress_and_dependency_reconciled, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.feature_progress_and_dependency_reconciled) && unit.attestations.feature_progress_and_dependency_reconciled' }
+    - { id: roam_risks_updated, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.roam_risks_updated) && unit.attestations.roam_risks_updated' }
+    - { id: blocked_or_unblocked_reason_present, kind: postcondition, type: state, expression: cel, value: 'blocked_route_ok' }

@@ -1,110 +1,42 @@
 workflow:
-  version: 2
   id: system-demo
-  rank: suborchestration
   kind: ceremony
   parent: art
   facilitator: "@release-train-engineer"
-  skills: [system-demo]
-  log_dir: portfolio/logs/{orchestration}/{product}/{unit_id}
   steps:
     - id: demo
       kind: verify
       actor: "@quality-engineer"
       output: qa-signoff
       conditions:
-        - kind: precondition
-          type: input
-          expression: ref
-          value: portfolio/{product}/features/{unit_id}.md
-          id: input_unit_id_md
-        - kind: precondition
-          type: state
-          id: feature_in_progress
-          expression: cel
-          value: status == "in-progress"
-        - kind: precondition
-          type: state
-          id: all_child_stories_done
-          expression: cel
-          value: all_children_done
-        - kind: precondition
-          type: state
-          id: child_qa_signoffs_present
-          expression: cel
-          value: child_qa_signoffs_present
-        - kind: postcondition
-          type: content
-          id: integrated_increment_demonstrated_against_feature_ac
-          expression: cel
-          value: has(unit.attestations) && has(unit.attestations.integrated_increment_demonstrated_against_feature_ac) && unit.attestations.integrated_increment_demonstrated_against_feature_ac
-        - kind: postcondition
-          type: content
-          id: quality_engineer_acceptance_and_escaped_defect_verdict
-          expression: cel
-          value: has(unit.attestations) && has(unit.attestations.quality_engineer_acceptance_and_escaped_defect_verdict) && unit.attestations.quality_engineer_acceptance_and_escaped_defect_verdict
+        - { id: input_unit_id_md, kind: precondition, type: input, expression: ref, value: 'portfolio/{product}/features/{unit_id}.md' }
+        - { id: feature_in_progress, kind: precondition, type: state, expression: cel, value: 'status == "in-progress"' }
+        - { id: all_child_stories_done, kind: precondition, type: state, expression: cel, value: 'all_children_done' }
+        - { id: child_qa_signoffs_present, kind: precondition, type: state, expression: cel, value: 'child_qa_signoffs_present' }
+        - { id: integrated_increment_demonstrated_against_feature_ac, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.integrated_increment_demonstrated_against_feature_ac) && unit.attestations.integrated_increment_demonstrated_against_feature_ac' }
+        - { id: quality_engineer_acceptance_and_escaped_defect_verdict, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.quality_engineer_acceptance_and_escaped_defect_verdict) && unit.attestations.quality_engineer_acceptance_and_escaped_defect_verdict' }
     - id: verify-security
       kind: verify
       actor: "@security-expert"
       output: security-review
       conditions:
-        - kind: postcondition
-          type: content
-          id: security_verdict_recorded
-          expression: cel
-          value: has(unit.attestations) && has(unit.attestations.security_verdict_recorded) && unit.attestations.security_verdict_recorded
+        - { id: security_verdict_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.security_verdict_recorded) && unit.attestations.security_verdict_recorded' }
     - id: verify-operability
       kind: verify
       actor: "@operator"
       output: operability-review
       conditions:
-        - kind: postcondition
-          type: content
-          id: operator_deployability_verdict_recorded
-          expression: cel
-          value: has(unit.attestations) && has(unit.attestations.operator_deployability_verdict_recorded) && unit.attestations.operator_deployability_verdict_recorded
+        - { id: operator_deployability_verdict_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.operator_deployability_verdict_recorded) && unit.attestations.operator_deployability_verdict_recorded' }
     - id: demo-gate
       kind: gate
       gate: ★ Demo Gate
       actor: central-supervisor
       conditions:
-        - kind: precondition
-          type: after
-          expression: ref
-          value: demo
-          id: after_demo
-        - kind: precondition
-          type: after
-          expression: ref
-          value: verify-security
-          id: after_verify_security
-        - kind: precondition
-          type: after
-          expression: ref
-          value: verify-operability
-          id: after_verify_operability
-        - kind: invariant
-          type: authority
-          id: human_decides_gate
-          expression: instruction
-          value: instructions/human-decides-gate.instructions.md
-        - kind: postcondition
-          type: output
-          expression: ref
-          value: portfolio/{product}/features/{unit_id}.md
-          id: output_unit_id_md
-        - kind: postcondition
-          type: transition
-          id: central_supervisor_demo_gate_decision_recorded
-          expression: cel
-          value: has(unit.attestations) && has(unit.attestations.central_supervisor_demo_gate_decision_recorded) && unit.attestations.central_supervisor_demo_gate_decision_recorded
-        - kind: postcondition
-          type: transition
-          id: feature_cost_committed_once_on_accept
-          expression: cel
-          value: has(unit.cost)
-        - kind: invariant
-          type: content
-          id: feature_cost_snapshot_measured_once_from_logs
-          expression: instruction
-          value: instructions/feature-cost-snapshot-measured-once-from-logs.instructions.md
+        - { id: after_demo, kind: precondition, type: after, expression: ref, value: 'demo' }
+        - { id: after_verify_security, kind: precondition, type: after, expression: ref, value: 'verify-security' }
+        - { id: after_verify_operability, kind: precondition, type: after, expression: ref, value: 'verify-operability' }
+        - { id: human_decides_gate, kind: invariant, type: authority, expression: instruction, value: 'instructions/human-decides-gate.instructions.md' }
+        - { id: output_unit_id_md, kind: postcondition, type: output, expression: ref, value: 'portfolio/{product}/features/{unit_id}.md' }
+        - { id: central_supervisor_demo_gate_decision_recorded, kind: postcondition, type: transition, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.central_supervisor_demo_gate_decision_recorded) && unit.attestations.central_supervisor_demo_gate_decision_recorded' }
+        - { id: feature_cost_committed_once_on_accept, kind: postcondition, type: transition, expression: cel, value: 'has(unit.cost)' }
+        - { id: feature_cost_snapshot_measured_once_from_logs, kind: invariant, type: content, expression: instruction, value: 'instructions/feature-cost-snapshot-measured-once-from-logs.instructions.md' }
