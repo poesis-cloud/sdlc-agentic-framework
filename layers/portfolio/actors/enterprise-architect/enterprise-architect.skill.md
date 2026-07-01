@@ -37,7 +37,7 @@ The **body** of the portfolio-architecture handlers in the portfolio flow (see t
 
 ### Runway (`reviewing→analyzing`)
 1. Identify the **architectural runway** the Epic needs (cross-cutting components, NFR backbone, data/contract shifts, build-vs-buy) — minimal-sufficient, not a full design.
-2. Decompose into **Feature seeds** (candidate Features `product-manager-author` will later derive), each tagged with its **target ART** (product slug from the registry).
+2. Decompose into **Feature seeds** (candidate Features `product-manager` will later derive), each tagged with its **target ART** (product slug from the registry).
 3. Note enabler work + key risks/assumptions. Set `status: analyzing`. Commit; control returns to `@value-management-officier`, which dispatches the PM⇄EA challenge and stages the ★ Epic Gate.
 
 ### Enabler

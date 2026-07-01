@@ -1,7 +1,7 @@
 ---
 name: pi-planning
 user-invocable: false
-description: '**SAFe CEREMONY SKILL.** The PI Planning playbook loaded by `@release-train-engineer` per Feature (when `ready` and its `depends_on` are met). USE FOR: turning `ready` Features into committed PI objectives; capacity allocation; cross-Feature dependency mapping; ROAM risk; the confidence vote; dispatching `@scrum-master`. It returns the PI objectives; `@release-train-engineer` commits Feature `ready→committed`. DO NOT USE FOR: deciding the ★ Architecture / Demo gates (Central Supervisor); authoring Features (use `product-manager-author`); the PI retro (use `inspect-and-adapt`). Loaded by `@release-train-engineer` before facilitating.'
+description: '**SAFe CEREMONY SKILL.** The PI Planning playbook loaded by `@release-train-engineer` per Feature (when `ready` and its `depends_on` are met). USE FOR: turning `ready` Features into committed PI objectives; capacity allocation; cross-Feature dependency mapping; ROAM risk; the confidence vote; dispatching `@scrum-master`. It returns the PI objectives; `@release-train-engineer` commits Feature `ready→committed`. DO NOT USE FOR: deciding the ★ Architecture / Demo gates (Central Supervisor); authoring Features (use `product-manager`); the PI retro (use `inspect-and-adapt`). Loaded by `@release-train-engineer` before facilitating.'
 ---
 
 <!-- Copyright 2026 Poesis Cloud and contributors

@@ -185,7 +185,7 @@ Three skill families split the handler bodies:
 - **Ceremony skills** — one per SAFe **event**. Loaded by the **orchestrator** to facilitate the sub-orchestration when a unit reaches its condition.
 - **Practice skills** — one per SAFe **practice**. Loaded by the **orchestrator** to facilitate a continuous-collaboration sub-orchestration (no solo authoring).
 
-**Load mechanism (explicit, not auto-trigger).** Description auto-match is unreliable for *dispatched* subagents, so the dispatch prompt **names the skill + path + handler**: e.g. `Acting as PM — load skills/product-manager-author, execute handler "Feature@funnel"`. An orchestrator loads its own ceremony skill before facilitating a ceremony.
+**Load mechanism (explicit, not auto-trigger).** Description auto-match is unreliable for *dispatched* subagents, so the dispatch prompt **names the skill + path + handler**: e.g. `Acting as PM — load skills/product-manager, execute handler "Feature@funnel"`. An orchestrator loads its own ceremony skill before facilitating a ceremony.
 
 **Guard rails travel into every author / ceremony / practice skill** (they do not relax the model): never decide a ★ gate (the Central Supervisor decides); **consume** the orchestrator-owned `*.artifact.schema.json` + `*.artifact-template.md` pair from `artifacts/`, never restate them (one source of truth); obey the blackboard contract (read committed input artifact(s) → commit the output artifact).
 
@@ -280,7 +280,7 @@ When one review packet spans mixed ownership, split the routing by owner rather 
 | Verification & Sign-off (QA + Security) | `@scrum-master` | `scrum-master/workflows/verification` **(nested)** | Practice·CI |
 | — BO hat (business Epic authoring) | dispatched `@business-owner` | `business-owner` | Author |
 | — EA hat (Vision / runway / enabler Epic authoring) | dispatched `@enterprise-architect` | `enterprise-architect` | Author |
-| — PM hat (business Feature authoring) | dispatched `@product-manager` | `product-manager-author` | Author |
+| — PM hat (business Feature authoring) | dispatched `@product-manager` | `product-manager` | Author |
 | — SA hat (ADR / enabler Feature / enabler Story authoring) | dispatched `@system-architect` | `system-architect` | Author |
 | — PO hat (business Story authoring) | dispatched `@product-owner` | `product-owner` | Author |
 
