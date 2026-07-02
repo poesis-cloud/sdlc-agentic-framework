@@ -13,7 +13,7 @@ The harness is check-only and artifact-driven.
 - It mediates all host hook events so the host adapter never becomes a second source of truth.
 - It records one journal entry per harness command, making each orchestration run observable and replayable.
 
-The harness never writes business artifacts itself. Status transitions, gate decisions, and authored deliverables are all produced by dispatched agents and then checked by the harness.
+The harness never authors business artifacts itself. Status transitions, gate decisions, and authored deliverables are all produced by dispatched agents and then checked by the harness. The one deliberate exception is enforcement: the postcondition hook may **revert** an invalid write (restore the last-good version or delete the new file) to preserve the Portfolio Validity Invariant (C6) — it never authors content.
 
 ## Invariants
 
@@ -45,6 +45,14 @@ The actor agent may source from portfolio data, external systems, tools, or web 
 Every persisted artifact used in condition evaluation must be cataloged and schema-bound. The selector model has one selector type: selecting persisted portfolio artifacts.
 
 Where a condition depends on log evidence, that evidence is read from persisted harness logs (part of portfolio state) and asserted as state; logs are not business artifacts.
+
+### C6 - Portfolio validity
+
+The portfolio contains exclusively schema-valid artifacts and valid state, at all times.
+
+- Maintained at the write boundary. The postcondition hook validates each agent write against its artifact schema and, if invalid, reverts it (restore the last-committed version if the path is tracked, else delete the new file) and denies with the schema findings so the agent retries. This revert is the harness's single deliberate write.
+- Relied on by every reader. The artifact repository is valid-by-construction: `discover()` raises rather than yield a schema-invalid artifact, so no domain code (state selection, step checks, orchestration) ever operates on an invalid artifact. The validators that must enumerate invalids (`check-artifact`, the hook) read the raw universe (`scan_raw`) instead.
+- Enables safe asynchronous / remote portfolio sync. A synced replica is trustably valid; reconciliation only has to preserve validity, not re-derive it.
 
 ## Two trigger planes, one command system
 
