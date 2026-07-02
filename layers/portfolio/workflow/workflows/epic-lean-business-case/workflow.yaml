@@ -13,9 +13,12 @@ workflow:
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: epic
-      set_predicate: has(unit.strategic_theme)
+        set_type: artifact
+        artifact_types:
+        - alias: epic
+          schema_id: epic
+        set_query: epic.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.strategic_theme))
     instructions:
     - instructions/discovery-open-items-recorded-or-explicitly-none.instructions.md
   - id: ea-challenge

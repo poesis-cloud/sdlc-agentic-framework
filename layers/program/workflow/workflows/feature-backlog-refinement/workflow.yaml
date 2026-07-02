@@ -13,9 +13,12 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "funnel"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "funnel")
   - id: draft-enabler
     kind: author
     actor: '@system-architect'
@@ -114,9 +117,12 @@ workflow:
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: has(unit.wsjf)
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.wsjf))
   - id: owner-rewrite-enabler
     kind: author
     actor: '@system-architect'
@@ -146,6 +152,9 @@ workflow:
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: has(unit.wsjf)
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.wsjf))

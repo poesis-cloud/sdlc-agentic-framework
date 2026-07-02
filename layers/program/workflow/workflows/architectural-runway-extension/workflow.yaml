@@ -13,9 +13,12 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "arch-pending" && has(unit.structurant)
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "arch-pending" && has(x.structurant))
   - id: challenge-security
     kind: challenge
     actor: '@security-expert'

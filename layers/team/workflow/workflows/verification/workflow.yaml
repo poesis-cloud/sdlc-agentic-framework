@@ -12,13 +12,19 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "in-qa"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "in-qa")
     - id: story_cost_committed_once
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: has(unit.cost)
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.cost))

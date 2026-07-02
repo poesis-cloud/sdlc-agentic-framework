@@ -13,9 +13,12 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "ready"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "ready")
   - id: confirm-runway
     kind: author
     actor: '@system-architect'

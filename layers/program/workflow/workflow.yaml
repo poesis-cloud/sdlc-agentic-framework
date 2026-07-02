@@ -11,23 +11,33 @@ workflow:
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: has(unit.parent_epic)
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.parent_epic))
     - id: feature_typed_business_or_enabler
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: has(unit.type) && (unit.type == "business" || unit.type == "enabler")
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.type) && (x.type == "business" || x.type
+        == "enabler"))
     - id: status_committed_funnel
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "funnel"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "funnel")
   - id: refine-feature
     kind: delegate
     delegates_to: workflows/feature-backlog-refinement
@@ -41,23 +51,32 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "funnel"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "funnel")
     - id: ac_and_wsjf_present
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: has(unit.wsjf)
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.wsjf))
     - id: status_committed_refined
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "refined"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "refined")
   - id: feature-gate
     kind: gate
     gate: ★ Feature Gate
@@ -71,9 +90,12 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "refined"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "refined")
   - id: extend-runway
     kind: delegate
     delegates_to: workflows/architectural-runway-extension
@@ -87,10 +109,13 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: '!(has(unit.structurant) && unit.structurant) || unit.status
-        == "arch-pending"'
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, !(has(x.structurant) && x.structurant) || x.status
+        == "arch-pending")
   - id: architecture-gate
     kind: gate
     gate: ★ Architecture Gate
@@ -113,16 +138,22 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "ready"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "ready")
     - id: status_committed_committed
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "committed"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "committed")
   - id: start-implementing
     kind: direct
     actor: '@release-train-engineer'
@@ -135,16 +166,22 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "committed"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "committed")
     - id: status_committed_in_progress
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "in-progress"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "in-progress")
   - id: pr-gate
     kind: gate
     gate: ★ PR Gate
@@ -167,9 +204,12 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "in-progress"
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "in-progress")
   - id: demo-gate
     kind: gate
     gate: ★ Demo Gate
@@ -183,6 +223,9 @@ workflow:
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: unit.status == "done" && has(unit.cost)
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "done" && has(x.cost))

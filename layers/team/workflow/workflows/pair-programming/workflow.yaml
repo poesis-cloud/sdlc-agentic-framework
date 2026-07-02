@@ -13,10 +13,13 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "ready" || unit.status == "in-progress" || unit.status
-        == "in-review"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "ready" || x.status == "in-progress"
+        || x.status == "in-review")
   - id: critique
     kind: challenge
     actor: '@developer'

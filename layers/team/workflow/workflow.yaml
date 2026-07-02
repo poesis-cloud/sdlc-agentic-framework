@@ -11,9 +11,12 @@ workflow:
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "backlog"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "backlog")
   - id: groom-story
     kind: delegate
     delegates_to: workflows/story-backlog-refinement
@@ -27,9 +30,12 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "backlog"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "backlog")
   - id: story-gate
     kind: gate
     gate: ★ Story Gate
@@ -43,9 +49,12 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "backlog"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "backlog")
   - id: execute-story
     kind: delegate
     delegates_to: workflows/pair-programming
@@ -59,9 +68,12 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "ready"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "ready")
   - id: accept-to-qa
     kind: direct
     actor: '@scrum-master'
@@ -74,16 +86,22 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "in-review"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "in-review")
     - id: status_committed_in_qa
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "in-qa"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "in-qa")
   - id: verify-story
     kind: delegate
     delegates_to: workflows/verification
@@ -97,16 +115,22 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "in-qa"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "in-qa")
     - id: status_committed_awaiting_pr_with_cost
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "awaiting-pr" && has(unit.cost)
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "awaiting-pr" && has(x.cost))
   - id: pr-gate
     kind: gate
     gate: ★ PR Gate
@@ -120,6 +144,9 @@ workflow:
       kind: precondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: story
-      set_predicate: unit.status == "awaiting-pr"
+        set_type: artifact
+        artifact_types:
+        - alias: story
+          schema_id: story
+        set_query: story.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, x.status == "awaiting-pr")

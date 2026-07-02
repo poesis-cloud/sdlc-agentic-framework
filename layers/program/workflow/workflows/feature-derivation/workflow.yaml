@@ -13,16 +13,23 @@ workflow:
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: has(unit.parent_epic)
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.parent_epic))
     - id: feature_typed_business_or_enabler
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: has(unit.type) && (unit.type == "business" || unit.type == "enabler")
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.type) && (x.type == "business" || x.type
+        == "enabler"))
   - id: derive-enabler
     kind: author
     actor: '@system-architect'
@@ -36,13 +43,20 @@ workflow:
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: has(unit.parent_epic)
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.parent_epic))
     - id: feature_typed_business_or_enabler
       kind: postcondition
       type: state
       set_selector:
-        set_type: unit
-        schema_id: feature
-      set_predicate: has(unit.type) && (unit.type == "business" || unit.type == "enabler")
+        set_type: artifact
+        artifact_types:
+        - alias: feature
+          schema_id: feature
+        set_query: feature.filter(x, x.id == unit_id)
+      set_predicate: selected.all(x, has(x.type) && (x.type == "business" || x.type
+        == "enabler"))
