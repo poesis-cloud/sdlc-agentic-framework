@@ -3,10 +3,6 @@ workflow:
   kind: practice
   parent: lpm
   facilitator: '@value-management-officier'
-  cdp_stage: continuous-exploration
-  delivers:
-  - epic
-  - lean-business-case
   steps:
   - id: discovery-and-draft
     kind: author

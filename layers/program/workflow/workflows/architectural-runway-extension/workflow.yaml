@@ -2,7 +2,6 @@ workflow:
   id: architectural-runway-extension
   kind: practice
   parent: art
-  cdp_stage: continuous-exploration
   facilitator: '@release-train-engineer'
   steps:
   - id: inventory

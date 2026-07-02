@@ -2,7 +2,6 @@ workflow:
   id: architectural-vision
   kind: practice
   parent: lpm
-  cdp_stage: continuous-exploration
   facilitator: '@value-management-officier'
   steps:
   - id: ea-draft
