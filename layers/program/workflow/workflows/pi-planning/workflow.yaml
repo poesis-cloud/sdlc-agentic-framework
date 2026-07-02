@@ -9,84 +9,215 @@ workflow:
     actor: '@product-manager'
     output: feature
     conditions:
-    - { id: input_unit_id_md, kind: precondition, type: input, expression: ref, value: 'portfolio/{product}/features/{unit_id}.md' }
-    - { id: feature_ready, kind: precondition, type: state, expression: cel, value: 'status == "ready"' }
-    - { id: dependencies_met, kind: precondition, type: state, expression: cel, value: 'depends_on_met' }
-    - { id: product_manager_intent_and_wsjf_confirmed, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.product_manager_intent_and_wsjf_confirmed) && unit.attestations.product_manager_intent_and_wsjf_confirmed' }
+    - id: input_unit_id_md
+      kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+    - id: feature_ready
+      kind: precondition
+      type: state
+      expression: cel
+      value: status == "ready"
+    - id: dependencies_met
+      kind: precondition
+      type: state
+      expression: cel
+      value: depends_on_met
+    - id: product_manager_intent_and_wsjf_confirmed
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.product_manager_intent_and_wsjf_confirmed)
+        && unit.attestations.product_manager_intent_and_wsjf_confirmed
   - id: confirm-runway
     kind: author
     actor: '@system-architect'
     output: runway-register
     conditions:
-    - { id: architecture_runway_and_dependencies_confirmed, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.architecture_runway_and_dependencies_confirmed) && unit.attestations.architecture_runway_and_dependencies_confirmed' }
+    - id: architecture_runway_and_dependencies_confirmed
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.architecture_runway_and_dependencies_confirmed)
+        && unit.attestations.architecture_runway_and_dependencies_confirmed
   - id: confirm-priority
     kind: author
     actor: '@business-owner'
     output: value-review
     conditions:
-    - { id: business_owner_priority_confirmed, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.business_owner_priority_confirmed) && unit.attestations.business_owner_priority_confirmed' }
+    - id: business_owner_priority_confirmed
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.business_owner_priority_confirmed)
+        && unit.attestations.business_owner_priority_confirmed
   - id: challenge-feasibility
     kind: challenge
     actor: '@developer'
     output: feasibility-review
     conditions:
-    - { id: after_confirm_intent, kind: precondition, type: after, expression: ref, value: 'confirm-intent' }
-    - { id: after_confirm_runway, kind: precondition, type: after, expression: ref, value: 'confirm-runway' }
-    - { id: after_confirm_priority, kind: precondition, type: after, expression: ref, value: 'confirm-priority' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: developer_feasibility_challenge_recorded, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.developer_feasibility_challenge_recorded) && unit.attestations.developer_feasibility_challenge_recorded' }
+    - id: after_confirm_intent
+      kind: precondition
+      type: after
+      step_id: confirm-intent
+    - id: after_confirm_runway
+      kind: precondition
+      type: after
+      step_id: confirm-runway
+    - id: after_confirm_priority
+      kind: precondition
+      type: after
+      step_id: confirm-priority
+    - id: developer_feasibility_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.developer_feasibility_challenge_recorded)
+        && unit.attestations.developer_feasibility_challenge_recorded
   - id: challenge-testability
     kind: challenge
     actor: '@quality-engineer'
     output: testability-review
     conditions:
-    - { id: after_confirm_intent, kind: precondition, type: after, expression: ref, value: 'confirm-intent' }
-    - { id: after_confirm_runway, kind: precondition, type: after, expression: ref, value: 'confirm-runway' }
-    - { id: after_confirm_priority, kind: precondition, type: after, expression: ref, value: 'confirm-priority' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: quality_engineer_testability_challenge_recorded, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.quality_engineer_testability_challenge_recorded) && unit.attestations.quality_engineer_testability_challenge_recorded' }
+    - id: after_confirm_intent
+      kind: precondition
+      type: after
+      step_id: confirm-intent
+    - id: after_confirm_runway
+      kind: precondition
+      type: after
+      step_id: confirm-runway
+    - id: after_confirm_priority
+      kind: precondition
+      type: after
+      step_id: confirm-priority
+    - id: quality_engineer_testability_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.quality_engineer_testability_challenge_recorded)
+        && unit.attestations.quality_engineer_testability_challenge_recorded
   - id: challenge-nfr-security
     kind: challenge
     actor: '@security-expert'
     output: security-review
     conditions:
-    - { id: after_confirm_intent, kind: precondition, type: after, expression: ref, value: 'confirm-intent' }
-    - { id: after_confirm_runway, kind: precondition, type: after, expression: ref, value: 'confirm-runway' }
-    - { id: after_confirm_priority, kind: precondition, type: after, expression: ref, value: 'confirm-priority' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: security_nfr_challenge_recorded, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.security_nfr_challenge_recorded) && unit.attestations.security_nfr_challenge_recorded' }
+    - id: after_confirm_intent
+      kind: precondition
+      type: after
+      step_id: confirm-intent
+    - id: after_confirm_runway
+      kind: precondition
+      type: after
+      step_id: confirm-runway
+    - id: after_confirm_priority
+      kind: precondition
+      type: after
+      step_id: confirm-priority
+    - id: security_nfr_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.security_nfr_challenge_recorded)
+        && unit.attestations.security_nfr_challenge_recorded
   - id: challenge-nfr-operability
     kind: challenge
     actor: '@operator'
     output: operability-review
     conditions:
-    - { id: after_confirm_intent, kind: precondition, type: after, expression: ref, value: 'confirm-intent' }
-    - { id: after_confirm_runway, kind: precondition, type: after, expression: ref, value: 'confirm-runway' }
-    - { id: after_confirm_priority, kind: precondition, type: after, expression: ref, value: 'confirm-priority' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: operator_nfr_challenge_recorded, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.operator_nfr_challenge_recorded) && unit.attestations.operator_nfr_challenge_recorded' }
+    - id: after_confirm_intent
+      kind: precondition
+      type: after
+      step_id: confirm-intent
+    - id: after_confirm_runway
+      kind: precondition
+      type: after
+      step_id: confirm-runway
+    - id: after_confirm_priority
+      kind: precondition
+      type: after
+      step_id: confirm-priority
+    - id: operator_nfr_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.operator_nfr_challenge_recorded)
+        && unit.attestations.operator_nfr_challenge_recorded
   - id: challenge-ux
     kind: challenge
     actor: '@ux-designer'
     output: ux-review
     conditions:
-    - { id: after_confirm_intent, kind: precondition, type: after, expression: ref, value: 'confirm-intent' }
-    - { id: after_confirm_runway, kind: precondition, type: after, expression: ref, value: 'confirm-runway' }
-    - { id: after_confirm_priority, kind: precondition, type: after, expression: ref, value: 'confirm-priority' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: ux_challenge_recorded_or_trivial, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.ux_challenge_recorded_or_trivial) && unit.attestations.ux_challenge_recorded_or_trivial' }
+    - id: after_confirm_intent
+      kind: precondition
+      type: after
+      step_id: confirm-intent
+    - id: after_confirm_runway
+      kind: precondition
+      type: after
+      step_id: confirm-runway
+    - id: after_confirm_priority
+      kind: precondition
+      type: after
+      step_id: confirm-priority
+    - id: ux_challenge_recorded_or_trivial
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.ux_challenge_recorded_or_trivial)
+        && unit.attestations.ux_challenge_recorded_or_trivial
   - id: commit
     kind: commit
     actor: '@release-train-engineer'
     output: program-kanban
     conditions:
-    - { id: after_challenge_feasibility, kind: precondition, type: after, expression: ref, value: 'challenge-feasibility' }
-    - { id: after_challenge_testability, kind: precondition, type: after, expression: ref, value: 'challenge-testability' }
-    - { id: after_challenge_nfr_security, kind: precondition, type: after, expression: ref, value: 'challenge-nfr-security' }
-    - { id: after_challenge_nfr_operability, kind: precondition, type: after, expression: ref, value: 'challenge-nfr-operability' }
-    - { id: after_challenge_ux, kind: precondition, type: after, expression: ref, value: 'challenge-ux' }
-    - { id: output_program_md, kind: postcondition, type: output, expression: ref, value: 'portfolio/{product}/kanban/program.md' }
-    - { id: confidence_vote_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.confidence_vote_recorded) && unit.attestations.confidence_vote_recorded' }
-    - { id: roam_risks_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.roam_risks_recorded) && unit.attestations.roam_risks_recorded' }
-    - { id: status_committed_on_confidence, kind: postcondition, type: transition, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.status_committed_on_confidence) && unit.attestations.status_committed_on_confidence' }
-    - { id: scrum_master_dispatch_recorded_on_commit, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.scrum_master_dispatch_recorded_on_commit) && unit.attestations.scrum_master_dispatch_recorded_on_commit' }
+    - id: after_challenge_feasibility
+      kind: precondition
+      type: after
+      step_id: challenge-feasibility
+    - id: after_challenge_testability
+      kind: precondition
+      type: after
+      step_id: challenge-testability
+    - id: after_challenge_nfr_security
+      kind: precondition
+      type: after
+      step_id: challenge-nfr-security
+    - id: after_challenge_nfr_operability
+      kind: precondition
+      type: after
+      step_id: challenge-nfr-operability
+    - id: after_challenge_ux
+      kind: precondition
+      type: after
+      step_id: challenge-ux
+    - id: output_program_md
+      kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/{product}/kanban/program.md
+    - id: confidence_vote_recorded
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.confidence_vote_recorded)
+        && unit.attestations.confidence_vote_recorded
+    - id: roam_risks_recorded
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.roam_risks_recorded)
+        && unit.attestations.roam_risks_recorded
+    - id: status_committed_on_confidence
+      kind: postcondition
+      type: transition
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.status_committed_on_confidence)
+        && unit.attestations.status_committed_on_confidence
+    - id: scrum_master_dispatch_recorded_on_commit
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.scrum_master_dispatch_recorded_on_commit)
+        && unit.attestations.scrum_master_dispatch_recorded_on_commit

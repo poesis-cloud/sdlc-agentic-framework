@@ -9,44 +9,115 @@ workflow:
     actor: '@business-owner'
     output: strategic-themes
     conditions:
-    - { id: input_strategic_themes_md, kind: precondition, type: input, expression: ref, value: 'portfolio/strategic-themes.md' }
-    - { id: input_epics, kind: precondition, type: input, expression: ref, value: 'portfolio/epics/' }
-    - { id: business_owner_wsjf_rerank_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.business_owner_wsjf_rerank_recorded) && unit.attestations.business_owner_wsjf_rerank_recorded' }
-    - { id: strategic_theme_fit_or_revision_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.strategic_theme_fit_or_revision_recorded) && unit.attestations.strategic_theme_fit_or_revision_recorded' }
+    - id: input_strategic_themes_md
+      kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/strategic-themes.md
+    - id: input_epics
+      kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/epics/
+    - id: business_owner_wsjf_rerank_recorded
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.business_owner_wsjf_rerank_recorded)
+        && unit.attestations.business_owner_wsjf_rerank_recorded
+    - id: strategic_theme_fit_or_revision_recorded
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.strategic_theme_fit_or_revision_recorded)
+        && unit.attestations.strategic_theme_fit_or_revision_recorded
   - id: challenge-runway
     kind: challenge
     actor: '@enterprise-architect'
     output: architecture-review
     conditions:
-    - { id: after_rerank, kind: precondition, type: after, expression: ref, value: 'rerank' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: enterprise_architect_runway_enabler_view_recorded, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.enterprise_architect_runway_enabler_view_recorded) && unit.attestations.enterprise_architect_runway_enabler_view_recorded' }
+    - id: after_rerank
+      kind: precondition
+      type: after
+      step_id: rerank
+    - id: enterprise_architect_runway_enabler_view_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.enterprise_architect_runway_enabler_view_recorded)
+        && unit.attestations.enterprise_architect_runway_enabler_view_recorded
   - id: challenge-security
     kind: challenge
     actor: '@security-expert'
     output: security-review
     conditions:
-    - { id: after_rerank, kind: precondition, type: after, expression: ref, value: 'rerank' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: security_risk_lens_recorded, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.security_risk_lens_recorded) && unit.attestations.security_risk_lens_recorded' }
+    - id: after_rerank
+      kind: precondition
+      type: after
+      step_id: rerank
+    - id: security_risk_lens_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.security_risk_lens_recorded)
+        && unit.attestations.security_risk_lens_recorded
   - id: owner-rewrite
     kind: author
     actor: '@business-owner'
     output: strategic-themes
     conditions:
-    - { id: after_challenge_runway, kind: precondition, type: after, expression: ref, value: 'challenge-runway' }
-    - { id: after_challenge_security, kind: precondition, type: after, expression: ref, value: 'challenge-security' }
-    - { id: owner_rewrite_recorded_after_challenges, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.owner_rewrite_recorded_after_challenges) && unit.attestations.owner_rewrite_recorded_after_challenges' }
+    - id: after_challenge_runway
+      kind: precondition
+      type: after
+      step_id: challenge-runway
+    - id: after_challenge_security
+      kind: precondition
+      type: after
+      step_id: challenge-security
+    - id: owner_rewrite_recorded_after_challenges
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.owner_rewrite_recorded_after_challenges)
+        && unit.attestations.owner_rewrite_recorded_after_challenges
   - id: decide
     kind: commit
     actor: central-supervisor (Business-Owner hat)
     output: portfolio-review-decision
     conditions:
-    - { id: after_owner_rewrite, kind: precondition, type: after, expression: ref, value: 'owner-rewrite' }
-    - { id: input_epics, kind: precondition, type: input, expression: ref, value: 'portfolio/epics/' }
-    - { id: human_decides_pivots, kind: invariant, type: authority, expression: instruction, value: 'instructions/human-decides-pivots.instructions.md' }
-    - { id: output_portfolio_md, kind: postcondition, type: output, expression: ref, value: 'portfolio/kanban/portfolio.md' }
-    - { id: output_gate_decisions_md, kind: postcondition, type: output, expression: ref, value: 'portfolio/gate-decisions.md' }
-    - { id: central_supervisor_pivot_persevere_stop_recorded, kind: postcondition, type: transition, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.central_supervisor_pivot_persevere_stop_recorded) && unit.attestations.central_supervisor_pivot_persevere_stop_recorded' }
-    - { id: workflow_improvement_ledger_triaged, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.workflow_improvement_ledger_triaged) && unit.attestations.workflow_improvement_ledger_triaged' }
-    - { id: no_open_blocking_items, kind: postcondition, type: state, expression: cel, value: 'open_items_clear' }
+    - id: after_owner_rewrite
+      kind: precondition
+      type: after
+      step_id: owner-rewrite
+    - id: input_epics
+      kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/epics/
+    - id: output_portfolio_md
+      kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/kanban/portfolio.md
+    - id: output_gate_decisions_md
+      kind: postcondition
+      type: output
+      expression: ref
+      value: portfolio/gate-decisions.md
+    - id: central_supervisor_pivot_persevere_stop_recorded
+      kind: postcondition
+      type: transition
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.central_supervisor_pivot_persevere_stop_recorded)
+        && unit.attestations.central_supervisor_pivot_persevere_stop_recorded
+    - id: workflow_improvement_ledger_triaged
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.workflow_improvement_ledger_triaged)
+        && unit.attestations.workflow_improvement_ledger_triaged
+    - id: no_open_blocking_items
+      kind: postcondition
+      type: state
+      expression: cel
+      value: open_items_clear

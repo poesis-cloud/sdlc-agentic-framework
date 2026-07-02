@@ -9,51 +9,119 @@ workflow:
     actor: '@product-owner'
     output: story
     conditions:
-    - { id: input_features, kind: precondition, type: input, expression: ref, value: 'portfolio/{product}/features/' }
-    - { id: story_in_backlog, kind: precondition, type: state, expression: cel, value: 'status == "backlog"' }
-    - { id: discovery_open_items_recorded_or_explicitly_none, kind: invariant, type: clarification, expression: instruction, value: 'instructions/discovery-open-items-recorded-or-explicitly-none.instructions.md' }
-    - { id: owner_author_output_committed, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.owner_author_output_committed) && unit.attestations.owner_author_output_committed' }
-    - { id: work_item_relations_classified, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.work_item_relations_classified) && unit.attestations.work_item_relations_classified' }
+    - id: input_features
+      kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/
+    - id: story_in_backlog
+      kind: precondition
+      type: state
+      expression: cel
+      value: status == "backlog"
+    - id: owner_author_output_committed
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.owner_author_output_committed)
+        && unit.attestations.owner_author_output_committed
+    - id: work_item_relations_classified
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.work_item_relations_classified)
+        && unit.attestations.work_item_relations_classified
+    instructions:
+    - instructions/discovery-open-items-recorded-or-explicitly-none.instructions.md
   - id: challenge-split
     kind: challenge
     actor: '@developer'
     output: feasibility-review
     conditions:
-    - { id: after_draft, kind: precondition, type: after, expression: ref, value: 'draft' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: developer_split_dependency_challenge_recorded, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.developer_split_dependency_challenge_recorded) && unit.attestations.developer_split_dependency_challenge_recorded' }
+    - id: after_draft
+      kind: precondition
+      type: after
+      step_id: draft
+    - id: developer_split_dependency_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.developer_split_dependency_challenge_recorded)
+        && unit.attestations.developer_split_dependency_challenge_recorded
   - id: challenge-testability
     kind: challenge
     actor: '@quality-engineer'
     output: testability-review
     conditions:
-    - { id: after_draft, kind: precondition, type: after, expression: ref, value: 'draft' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: quality_engineer_testability_challenge_recorded, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.quality_engineer_testability_challenge_recorded) && unit.attestations.quality_engineer_testability_challenge_recorded' }
+    - id: after_draft
+      kind: precondition
+      type: after
+      step_id: draft
+    - id: quality_engineer_testability_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.quality_engineer_testability_challenge_recorded)
+        && unit.attestations.quality_engineer_testability_challenge_recorded
   - id: challenge-ux
     kind: challenge
     actor: '@ux-designer'
     output: ux-review
     conditions:
-    - { id: after_draft, kind: precondition, type: after, expression: ref, value: 'draft' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: ux_clarification_recorded_or_waived, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.ux_clarification_recorded_or_waived) && unit.attestations.ux_clarification_recorded_or_waived' }
+    - id: after_draft
+      kind: precondition
+      type: after
+      step_id: draft
+    - id: ux_clarification_recorded_or_waived
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.ux_clarification_recorded_or_waived)
+        && unit.attestations.ux_clarification_recorded_or_waived
   - id: challenge-architecture
     kind: challenge
     actor: '@system-architect'
     output: architecture-review
     conditions:
-    - { id: after_draft, kind: precondition, type: after, expression: ref, value: 'draft' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: architecture_clarification_recorded_or_waived, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.architecture_clarification_recorded_or_waived) && unit.attestations.architecture_clarification_recorded_or_waived' }
+    - id: after_draft
+      kind: precondition
+      type: after
+      step_id: draft
+    - id: architecture_clarification_recorded_or_waived
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.architecture_clarification_recorded_or_waived)
+        && unit.attestations.architecture_clarification_recorded_or_waived
   - id: owner-rewrite
     kind: author
     actor: '@product-owner'
     output: story
     conditions:
-    - { id: after_challenge_split, kind: precondition, type: after, expression: ref, value: 'challenge-split' }
-    - { id: after_challenge_testability, kind: precondition, type: after, expression: ref, value: 'challenge-testability' }
-    - { id: after_challenge_ux, kind: precondition, type: after, expression: ref, value: 'challenge-ux' }
-    - { id: after_challenge_architecture, kind: precondition, type: after, expression: ref, value: 'challenge-architecture' }
-    - { id: owner_rewrite_completed_after_challenge, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.owner_rewrite_completed_after_challenge) && unit.attestations.owner_rewrite_completed_after_challenge' }
-    - { id: blocking_open_items_resolved_or_deferred, kind: postcondition, type: state, expression: cel, value: 'open_items_clear' }
+    - id: after_challenge_split
+      kind: precondition
+      type: after
+      step_id: challenge-split
+    - id: after_challenge_testability
+      kind: precondition
+      type: after
+      step_id: challenge-testability
+    - id: after_challenge_ux
+      kind: precondition
+      type: after
+      step_id: challenge-ux
+    - id: after_challenge_architecture
+      kind: precondition
+      type: after
+      step_id: challenge-architecture
+    - id: owner_rewrite_completed_after_challenge
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.owner_rewrite_completed_after_challenge)
+        && unit.attestations.owner_rewrite_completed_after_challenge
+    - id: blocking_open_items_resolved_or_deferred
+      kind: postcondition
+      type: state
+      expression: cel
+      value: open_items_clear

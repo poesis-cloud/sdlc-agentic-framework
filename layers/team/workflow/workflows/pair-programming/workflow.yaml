@@ -9,22 +9,49 @@ workflow:
     actor: '@developer'
     output: code-change
     conditions:
-    - { id: input_features, kind: precondition, type: input, expression: ref, value: 'portfolio/{product}/features/' }
-    - { id: story_in_active_range, kind: precondition, type: state, expression: cel, value: 'status == "ready" || status == "in-progress" || status == "in-review"' }
-    - { id: driver_commit_with_tests, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.driver_commit_with_tests) && unit.attestations.driver_commit_with_tests' }
+    - id: input_features
+      kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/
+    - id: story_in_active_range
+      kind: precondition
+      type: state
+      expression: cel
+      value: status == "ready" || status == "in-progress" || status == "in-review"
+    - id: driver_commit_with_tests
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.driver_commit_with_tests)
+        && unit.attestations.driver_commit_with_tests
   - id: critique
     kind: challenge
     actor: '@developer'
     output: feasibility-review
     conditions:
-    - { id: after_drive, kind: precondition, type: after, expression: ref, value: 'drive' }
-    - { id: navigator_distinct_from_driver, kind: invariant, type: authority, expression: instruction, value: 'instructions/navigator-distinct-from-driver.instructions.md' }
-    - { id: navigator_critique_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.navigator_critique_recorded) && unit.attestations.navigator_critique_recorded' }
+    - id: after_drive
+      kind: precondition
+      type: after
+      step_id: drive
+    - id: navigator_critique_recorded
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.navigator_critique_recorded)
+        && unit.attestations.navigator_critique_recorded
   - id: critique-security
     kind: challenge
     actor: '@security-expert'
     output: security-review
     conditions:
-    - { id: after_drive, kind: precondition, type: after, expression: ref, value: 'drive' }
-    - { id: challenger_writes_no_owner_content, kind: invariant, type: authority, expression: instruction, value: 'instructions/challenger-writes-no-owner-content.instructions.md' }
-    - { id: security_review_recorded_or_trivial, kind: postcondition, type: challenge, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.security_review_recorded_or_trivial) && unit.attestations.security_review_recorded_or_trivial' }
+    - id: after_drive
+      kind: precondition
+      type: after
+      step_id: drive
+    - id: security_review_recorded_or_trivial
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.security_review_recorded_or_trivial)
+        && unit.attestations.security_review_recorded_or_trivial

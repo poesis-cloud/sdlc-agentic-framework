@@ -9,8 +9,32 @@ workflow:
     actor: '@scrum-master'
     output: iteration-review
     conditions:
-    - { id: input_features, kind: precondition, type: input, expression: ref, value: 'portfolio/{product}/features/' }
-    - { id: increment_demoed_against_sprint_goal, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.increment_demoed_against_sprint_goal) && unit.attestations.increment_demoed_against_sprint_goal' }
-    - { id: product_owner_ac_confirmation_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.product_owner_ac_confirmation_recorded) && unit.attestations.product_owner_ac_confirmation_recorded' }
-    - { id: central_supervisor_feedback_recorded, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.central_supervisor_feedback_recorded) && unit.attestations.central_supervisor_feedback_recorded' }
-    - { id: feedback_routed_to_po_or_rte, kind: postcondition, type: content, expression: cel, value: 'has(unit.attestations) && has(unit.attestations.feedback_routed_to_po_or_rte) && unit.attestations.feedback_routed_to_po_or_rte' }
+    - id: input_features
+      kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/
+    - id: increment_demoed_against_sprint_goal
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.increment_demoed_against_sprint_goal)
+        && unit.attestations.increment_demoed_against_sprint_goal
+    - id: product_owner_ac_confirmation_recorded
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.product_owner_ac_confirmation_recorded)
+        && unit.attestations.product_owner_ac_confirmation_recorded
+    - id: central_supervisor_feedback_recorded
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.central_supervisor_feedback_recorded)
+        && unit.attestations.central_supervisor_feedback_recorded
+    - id: feedback_routed_to_po_or_rte
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.feedback_routed_to_po_or_rte)
+        && unit.attestations.feedback_routed_to_po_or_rte

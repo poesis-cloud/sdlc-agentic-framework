@@ -2,372 +2,240 @@ workflow:
   id: feature-backlog-refinement
   kind: ceremony
   parent: art
-  facilitator: "@release-train-engineer"
+  facilitator: '@release-train-engineer'
   steps:
-    - id: draft-business
-      kind: author
-      actor: "@product-manager"
-      output: feature
-      conditions:
-        - {
-            id: input_unit_id_md,
-            kind: precondition,
-            type: input,
-            expression: ref,
-            value: "portfolio/{product}/features/{unit_id}.md",
-          }
-        - {
-            id: feature_in_funnel,
-            kind: precondition,
-            type: state,
-            expression: cel,
-            value: 'status == "funnel"',
-          }
-        - {
-            id: replay_parent_status_corrected,
-            kind: precondition,
-            type: state,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.replay_parent_status_corrected) && unit.attestations.replay_parent_status_corrected",
-          }
-        - {
-            id: discovery_lenses_walked,
-            kind: precondition,
-            type: clarification,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.discovery_lenses_walked) && unit.attestations.discovery_lenses_walked",
-          }
-        - {
-            id: business_feature_refined_or_trivial,
-            kind: postcondition,
-            type: content,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.business_feature_refined_or_trivial) && unit.attestations.business_feature_refined_or_trivial",
-          }
-        - {
-            id: work_item_relations_classified,
-            kind: postcondition,
-            type: content,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.work_item_relations_classified) && unit.attestations.work_item_relations_classified",
-          }
-    - id: draft-enabler
-      kind: author
-      actor: "@system-architect"
-      output: feature-enabler
-      conditions:
-        - {
-            id: discovery_lenses_walked_enabler,
-            kind: precondition,
-            type: clarification,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.discovery_lenses_walked_enabler) && unit.attestations.discovery_lenses_walked_enabler",
-          }
-        - {
-            id: enabler_feature_refined_or_trivial,
-            kind: postcondition,
-            type: content,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.enabler_feature_refined_or_trivial) && unit.attestations.enabler_feature_refined_or_trivial",
-          }
-    - id: challenge-feasibility
-      kind: challenge
-      actor: "@developer"
-      output: feasibility-review
-      conditions:
-        - {
-            id: after_draft_business,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-business",
-          }
-        - {
-            id: after_draft_enabler,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-enabler",
-          }
-        - {
-            id: challenger_writes_no_owner_content,
-            kind: invariant,
-            type: authority,
-            expression: instruction,
-            value: "instructions/challenger-writes-no-owner-content.instructions.md",
-          }
-        - {
-            id: feasibility_challenge_recorded,
-            kind: postcondition,
-            type: challenge,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.feasibility_challenge_recorded) && unit.attestations.feasibility_challenge_recorded",
-          }
-    - id: challenge-testability
-      kind: challenge
-      actor: "@quality-engineer"
-      output: testability-review
-      conditions:
-        - {
-            id: after_draft_business,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-business",
-          }
-        - {
-            id: after_draft_enabler,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-enabler",
-          }
-        - {
-            id: challenger_writes_no_owner_content,
-            kind: invariant,
-            type: authority,
-            expression: instruction,
-            value: "instructions/challenger-writes-no-owner-content.instructions.md",
-          }
-        - {
-            id: testability_challenge_recorded,
-            kind: postcondition,
-            type: challenge,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.testability_challenge_recorded) && unit.attestations.testability_challenge_recorded",
-          }
-    - id: challenge-architecture
-      kind: challenge
-      actor: "@system-architect"
-      output: architecture-review
-      conditions:
-        - {
-            id: after_draft_business,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-business",
-          }
-        - {
-            id: after_draft_enabler,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-enabler",
-          }
-        - {
-            id: challenger_writes_no_owner_content,
-            kind: invariant,
-            type: authority,
-            expression: instruction,
-            value: "instructions/challenger-writes-no-owner-content.instructions.md",
-          }
-        - {
-            id: structurant_challenge_recorded,
-            kind: postcondition,
-            type: challenge,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.structurant_challenge_recorded) && unit.attestations.structurant_challenge_recorded",
-          }
-    - id: challenge-security
-      kind: challenge
-      actor: "@security-expert"
-      output: security-review
-      conditions:
-        - {
-            id: after_draft_business,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-business",
-          }
-        - {
-            id: after_draft_enabler,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-enabler",
-          }
-        - {
-            id: challenger_writes_no_owner_content,
-            kind: invariant,
-            type: authority,
-            expression: instruction,
-            value: "instructions/challenger-writes-no-owner-content.instructions.md",
-          }
-        - {
-            id: security_challenge_recorded,
-            kind: postcondition,
-            type: challenge,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.security_challenge_recorded) && unit.attestations.security_challenge_recorded",
-          }
-    - id: challenge-ux
-      kind: challenge
-      actor: "@ux-designer"
-      output: ux-review
-      conditions:
-        - {
-            id: after_draft_business,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-business",
-          }
-        - {
-            id: after_draft_enabler,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "draft-enabler",
-          }
-        - {
-            id: challenger_writes_no_owner_content,
-            kind: invariant,
-            type: authority,
-            expression: instruction,
-            value: "instructions/challenger-writes-no-owner-content.instructions.md",
-          }
-        - {
-            id: ux_challenge_recorded_or_trivial,
-            kind: postcondition,
-            type: challenge,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.ux_challenge_recorded_or_trivial) && unit.attestations.ux_challenge_recorded_or_trivial",
-          }
-    - id: owner-rewrite-business
-      kind: author
-      actor: "@product-manager"
-      output: feature
-      conditions:
-        - {
-            id: after_challenge_feasibility,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-feasibility",
-          }
-        - {
-            id: after_challenge_testability,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-testability",
-          }
-        - {
-            id: after_challenge_architecture,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-architecture",
-          }
-        - {
-            id: after_challenge_security,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-security",
-          }
-        - {
-            id: after_challenge_ux,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-ux",
-          }
-        - {
-            id: only_owner_writes_business_feature,
-            kind: invariant,
-            type: authority,
-            expression: instruction,
-            value: "instructions/only-owner-writes-business-feature.instructions.md",
-          }
-        - {
-            id: ac_and_wsjf_present,
-            kind: postcondition,
-            type: content,
-            expression: cel,
-            value: "has(unit.wsjf)",
-          }
-        - {
-            id: refinement_roster_exercised,
-            kind: postcondition,
-            type: content,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.refinement_roster_exercised) && unit.attestations.refinement_roster_exercised",
-          }
-        - {
-            id: business_owner_rewrite_or_trivial,
-            kind: postcondition,
-            type: content,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.business_owner_rewrite_or_trivial) && unit.attestations.business_owner_rewrite_or_trivial",
-          }
-    - id: owner-rewrite-enabler
-      kind: author
-      actor: "@system-architect"
-      output: feature-enabler
-      conditions:
-        - {
-            id: after_challenge_feasibility,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-feasibility",
-          }
-        - {
-            id: after_challenge_testability,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-testability",
-          }
-        - {
-            id: after_challenge_architecture,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-architecture",
-          }
-        - {
-            id: after_challenge_security,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-security",
-          }
-        - {
-            id: after_challenge_ux,
-            kind: precondition,
-            type: after,
-            expression: ref,
-            value: "challenge-ux",
-          }
-        - {
-            id: only_owner_writes_enabler_feature,
-            kind: invariant,
-            type: authority,
-            expression: instruction,
-            value: "instructions/only-owner-writes-enabler-feature.instructions.md",
-          }
-        - {
-            id: ac_and_wsjf_present,
-            kind: postcondition,
-            type: content,
-            expression: cel,
-            value: "has(unit.wsjf)",
-          }
-        - {
-            id: refinement_roster_exercised,
-            kind: postcondition,
-            type: content,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.refinement_roster_exercised) && unit.attestations.refinement_roster_exercised",
-          }
-        - {
-            id: enabler_owner_rewrite_or_trivial,
-            kind: postcondition,
-            type: content,
-            expression: cel,
-            value: "has(unit.attestations) && has(unit.attestations.enabler_owner_rewrite_or_trivial) && unit.attestations.enabler_owner_rewrite_or_trivial",
-          }
+  - id: draft-business
+    kind: author
+    actor: '@product-manager'
+    output: feature
+    conditions:
+    - id: input_unit_id_md
+      kind: precondition
+      type: input
+      expression: ref
+      value: portfolio/{product}/features/{unit_id}.md
+    - id: feature_in_funnel
+      kind: precondition
+      type: state
+      expression: cel
+      value: status == "funnel"
+    - id: replay_parent_status_corrected
+      kind: precondition
+      type: state
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.replay_parent_status_corrected)
+        && unit.attestations.replay_parent_status_corrected
+    - id: discovery_lenses_walked
+      kind: precondition
+      type: clarification
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.discovery_lenses_walked)
+        && unit.attestations.discovery_lenses_walked
+    - id: business_feature_refined_or_trivial
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.business_feature_refined_or_trivial)
+        && unit.attestations.business_feature_refined_or_trivial
+    - id: work_item_relations_classified
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.work_item_relations_classified)
+        && unit.attestations.work_item_relations_classified
+  - id: draft-enabler
+    kind: author
+    actor: '@system-architect'
+    output: feature-enabler
+    conditions:
+    - id: discovery_lenses_walked_enabler
+      kind: precondition
+      type: clarification
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.discovery_lenses_walked_enabler)
+        && unit.attestations.discovery_lenses_walked_enabler
+    - id: enabler_feature_refined_or_trivial
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.enabler_feature_refined_or_trivial)
+        && unit.attestations.enabler_feature_refined_or_trivial
+  - id: challenge-feasibility
+    kind: challenge
+    actor: '@developer'
+    output: feasibility-review
+    conditions:
+    - id: after_draft_business
+      kind: precondition
+      type: after
+      step_id: draft-business
+    - id: after_draft_enabler
+      kind: precondition
+      type: after
+      step_id: draft-enabler
+    - id: feasibility_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.feasibility_challenge_recorded)
+        && unit.attestations.feasibility_challenge_recorded
+  - id: challenge-testability
+    kind: challenge
+    actor: '@quality-engineer'
+    output: testability-review
+    conditions:
+    - id: after_draft_business
+      kind: precondition
+      type: after
+      step_id: draft-business
+    - id: after_draft_enabler
+      kind: precondition
+      type: after
+      step_id: draft-enabler
+    - id: testability_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.testability_challenge_recorded)
+        && unit.attestations.testability_challenge_recorded
+  - id: challenge-architecture
+    kind: challenge
+    actor: '@system-architect'
+    output: architecture-review
+    conditions:
+    - id: after_draft_business
+      kind: precondition
+      type: after
+      step_id: draft-business
+    - id: after_draft_enabler
+      kind: precondition
+      type: after
+      step_id: draft-enabler
+    - id: structurant_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.structurant_challenge_recorded)
+        && unit.attestations.structurant_challenge_recorded
+  - id: challenge-security
+    kind: challenge
+    actor: '@security-expert'
+    output: security-review
+    conditions:
+    - id: after_draft_business
+      kind: precondition
+      type: after
+      step_id: draft-business
+    - id: after_draft_enabler
+      kind: precondition
+      type: after
+      step_id: draft-enabler
+    - id: security_challenge_recorded
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.security_challenge_recorded)
+        && unit.attestations.security_challenge_recorded
+  - id: challenge-ux
+    kind: challenge
+    actor: '@ux-designer'
+    output: ux-review
+    conditions:
+    - id: after_draft_business
+      kind: precondition
+      type: after
+      step_id: draft-business
+    - id: after_draft_enabler
+      kind: precondition
+      type: after
+      step_id: draft-enabler
+    - id: ux_challenge_recorded_or_trivial
+      kind: postcondition
+      type: challenge
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.ux_challenge_recorded_or_trivial)
+        && unit.attestations.ux_challenge_recorded_or_trivial
+  - id: owner-rewrite-business
+    kind: author
+    actor: '@product-manager'
+    output: feature
+    conditions:
+    - id: after_challenge_feasibility
+      kind: precondition
+      type: after
+      step_id: challenge-feasibility
+    - id: after_challenge_testability
+      kind: precondition
+      type: after
+      step_id: challenge-testability
+    - id: after_challenge_architecture
+      kind: precondition
+      type: after
+      step_id: challenge-architecture
+    - id: after_challenge_security
+      kind: precondition
+      type: after
+      step_id: challenge-security
+    - id: after_challenge_ux
+      kind: precondition
+      type: after
+      step_id: challenge-ux
+    - id: ac_and_wsjf_present
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.wsjf)
+    - id: refinement_roster_exercised
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.refinement_roster_exercised)
+        && unit.attestations.refinement_roster_exercised
+    - id: business_owner_rewrite_or_trivial
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.business_owner_rewrite_or_trivial)
+        && unit.attestations.business_owner_rewrite_or_trivial
+  - id: owner-rewrite-enabler
+    kind: author
+    actor: '@system-architect'
+    output: feature-enabler
+    conditions:
+    - id: after_challenge_feasibility
+      kind: precondition
+      type: after
+      step_id: challenge-feasibility
+    - id: after_challenge_testability
+      kind: precondition
+      type: after
+      step_id: challenge-testability
+    - id: after_challenge_architecture
+      kind: precondition
+      type: after
+      step_id: challenge-architecture
+    - id: after_challenge_security
+      kind: precondition
+      type: after
+      step_id: challenge-security
+    - id: after_challenge_ux
+      kind: precondition
+      type: after
+      step_id: challenge-ux
+    - id: ac_and_wsjf_present
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.wsjf)
+    - id: refinement_roster_exercised
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.refinement_roster_exercised)
+        && unit.attestations.refinement_roster_exercised
+    - id: enabler_owner_rewrite_or_trivial
+      kind: postcondition
+      type: content
+      expression: cel
+      value: has(unit.attestations) && has(unit.attestations.enabler_owner_rewrite_or_trivial)
+        && unit.attestations.enabler_owner_rewrite_or_trivial
