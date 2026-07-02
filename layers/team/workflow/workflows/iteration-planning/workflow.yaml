@@ -9,33 +9,13 @@ workflow:
     actor: '@product-owner'
     output: story
     conditions:
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
     - id: feature_committed
       kind: precondition
       type: state
-      expression: cel
-      value: status == "committed"
-    - id: child_stories_present
-      kind: precondition
-      type: state
-      expression: cel
-      value: size(child_stories) >= 1
-    - id: owner_authored_stories_committed
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.owner_authored_stories_committed)
-        && unit.attestations.owner_authored_stories_committed
-    - id: work_item_relations_classified
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.work_item_relations_classified)
-        && unit.attestations.work_item_relations_classified
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "committed"
   - id: challenge-sizing
     kind: challenge
     actor: '@developer'
@@ -45,12 +25,6 @@ workflow:
       kind: precondition
       type: after
       step_id: author-stories
-    - id: developer_sizing_challenge_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.developer_sizing_challenge_recorded)
-        && unit.attestations.developer_sizing_challenge_recorded
   - id: challenge-testability
     kind: challenge
     actor: '@quality-engineer'
@@ -60,12 +34,6 @@ workflow:
       kind: precondition
       type: after
       step_id: author-stories
-    - id: quality_engineer_testability_challenge_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.quality_engineer_testability_challenge_recorded)
-        && unit.attestations.quality_engineer_testability_challenge_recorded
   - id: challenge-flag
     kind: challenge
     actor: '@system-architect'
@@ -75,12 +43,6 @@ workflow:
       kind: precondition
       type: after
       step_id: author-stories
-    - id: system_architect_story_flag_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.system_architect_story_flag_recorded)
-        && unit.attestations.system_architect_story_flag_recorded
   - id: challenge-security
     kind: challenge
     actor: '@security-expert'
@@ -90,12 +52,6 @@ workflow:
       kind: precondition
       type: after
       step_id: author-stories
-    - id: security_story_flag_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.security_story_flag_recorded)
-        && unit.attestations.security_story_flag_recorded
   - id: challenge-ux
     kind: challenge
     actor: '@ux-designer'
@@ -105,12 +61,6 @@ workflow:
       kind: precondition
       type: after
       step_id: author-stories
-    - id: ux_challenge_recorded_or_trivial
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.ux_challenge_recorded_or_trivial)
-        && unit.attestations.ux_challenge_recorded_or_trivial
   - id: plan-and-gate
     kind: gate
     gate: ★ Story Gate
@@ -136,27 +86,3 @@ workflow:
       kind: precondition
       type: after
       step_id: challenge-ux
-    - id: sprint_plan_committed
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.sprint_plan_committed)
-        && unit.attestations.sprint_plan_committed
-    - id: driver_navigator_pairs_assigned
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.driver_navigator_pairs_assigned)
-        && unit.attestations.driver_navigator_pairs_assigned
-    - id: story_gate_dor_result_per_story
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.story_gate_dor_result_per_story)
-        && unit.attestations.story_gate_dor_result_per_story
-    - id: first_ready_notifies_rte_feature_in_progress
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.first_ready_notifies_rte_feature_in_progress)
-        && unit.attestations.first_ready_notifies_rte_feature_in_progress

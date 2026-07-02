@@ -9,34 +9,13 @@ workflow:
     actor: '@enterprise-architect'
     output: architectural-vision
     conditions:
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/epics/{unit_id}.md
     - id: epic_in_reviewing
       kind: precondition
       type: state
-      expression: cel
-      value: status == "reviewing"
-    - id: enterprise_architect_output_committed
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.enterprise_architect_output_committed)
-        && unit.attestations.enterprise_architect_output_committed
-    - id: feature_seeds_and_target_arts_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.feature_seeds_and_target_arts_recorded)
-        && unit.attestations.feature_seeds_and_target_arts_recorded
-    - id: enabler_epic_seeds_or_deferrals_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.enabler_epic_seeds_or_deferrals_recorded)
-        && unit.attestations.enabler_epic_seeds_or_deferrals_recorded
+      set_selector:
+        set_type: unit
+        schema_id: epic
+      set_predicate: unit.status == "reviewing"
   - id: challenge-value
     kind: challenge
     actor: '@business-owner'
@@ -46,12 +25,6 @@ workflow:
       kind: precondition
       type: after
       step_id: ea-draft
-    - id: business_owner_value_challenge_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.business_owner_value_challenge_recorded)
-        && unit.attestations.business_owner_value_challenge_recorded
   - id: challenge-security-nfr
     kind: challenge
     actor: '@security-expert'
@@ -61,12 +34,6 @@ workflow:
       kind: precondition
       type: after
       step_id: ea-draft
-    - id: security_nfr_challenge_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.security_nfr_challenge_recorded)
-        && unit.attestations.security_nfr_challenge_recorded
   - id: challenge-operability
     kind: challenge
     actor: '@operator'
@@ -76,12 +43,6 @@ workflow:
       kind: precondition
       type: after
       step_id: ea-draft
-    - id: operator_infrastructure_challenge_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.operator_infrastructure_challenge_recorded)
-        && unit.attestations.operator_infrastructure_challenge_recorded
   - id: owner-rewrite
     kind: author
     actor: '@enterprise-architect'
@@ -99,18 +60,6 @@ workflow:
       kind: precondition
       type: after
       step_id: challenge-operability
-    - id: owner_rewrite_completed_after_challenge
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.owner_rewrite_completed_after_challenge)
-        && unit.attestations.owner_rewrite_completed_after_challenge
-    - id: replay_required_classified
-      kind: postcondition
-      type: state
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.replay_required_classified)
-        && unit.attestations.replay_required_classified
   - id: render
     kind: render
     actor: '@enterprise-architect'
@@ -120,14 +69,3 @@ workflow:
       kind: precondition
       type: after
       step_id: owner-rewrite
-    - id: output_runway_register_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/architecture/runway-register.md
-    - id: ready_for_vmo_commit
-      kind: postcondition
-      type: state
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.ready_for_vmo_commit)
-        && unit.attestations.ready_for_vmo_commit

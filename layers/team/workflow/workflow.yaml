@@ -7,33 +7,13 @@ workflow:
     delegates_to: workflows/iteration-planning
     actor: '@scrum-master'
     conditions:
-    - id: input_features
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
-    - id: committed_parent_feature_provided
-      kind: precondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.committed_parent_feature_provided)
-        && unit.attestations.committed_parent_feature_provided
-    - id: output_kanban
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/kanban/
-    - id: stories_authored_and_pairs_assigned
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.stories_authored_and_pairs_assigned)
-        && unit.attestations.stories_authored_and_pairs_assigned
     - id: status_committed_backlog
       kind: postcondition
-      type: transition
-      expression: cel
-      value: status == "backlog"
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "backlog"
   - id: groom-story
     kind: delegate
     delegates_to: workflows/story-backlog-refinement
@@ -46,20 +26,10 @@ workflow:
     - id: story_in_backlog
       kind: precondition
       type: state
-      expression: cel
-      value: status == "backlog"
-    - id: not_yet_dor_ready_else_trivial
-      kind: precondition
-      type: state
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.not_yet_dor_ready_else_trivial)
-        && unit.attestations.not_yet_dor_ready_else_trivial
-    - id: grooming_packet_committed
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.grooming_packet_committed)
-        && unit.attestations.grooming_packet_committed
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "backlog"
   - id: story-gate
     kind: gate
     gate: ★ Story Gate
@@ -69,32 +39,13 @@ workflow:
       kind: precondition
       type: after
       step_id: groom-story
-    - id: input_features
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
     - id: story_in_backlog
       kind: precondition
       type: state
-      expression: cel
-      value: status == "backlog"
-    - id: no_open_blocking_items
-      kind: precondition
-      type: state
-      expression: cel
-      value: open_items_clear
-    - id: output_kanban
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/kanban/
-    - id: story_gate_verdict_recorded
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.story_gate_verdict_recorded)
-        && unit.attestations.story_gate_verdict_recorded
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "backlog"
   - id: execute-story
     kind: delegate
     delegates_to: workflows/pair-programming
@@ -107,20 +58,10 @@ workflow:
     - id: story_ready
       kind: precondition
       type: state
-      expression: cel
-      value: status == "ready"
-    - id: pair_micro_cycle_driven
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.pair_micro_cycle_driven)
-        && unit.attestations.pair_micro_cycle_driven
-    - id: story_driven_in_progress
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.story_driven_in_progress)
-        && unit.attestations.story_driven_in_progress
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "ready"
   - id: accept-to-qa
     kind: direct
     actor: '@scrum-master'
@@ -132,24 +73,17 @@ workflow:
     - id: story_in_review
       kind: precondition
       type: state
-      expression: cel
-      value: status == "in-review"
-    - id: critique_accepted_and_wip_ok
-      kind: precondition
-      type: state
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.critique_accepted_and_wip_ok)
-        && unit.attestations.critique_accepted_and_wip_ok
-    - id: output_kanban
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/kanban/
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "in-review"
     - id: status_committed_in_qa
       kind: postcondition
-      type: transition
-      expression: cel
-      value: status == "in-qa"
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "in-qa"
   - id: verify-story
     kind: delegate
     delegates_to: workflows/verification
@@ -159,27 +93,20 @@ workflow:
       kind: precondition
       type: after
       step_id: accept-to-qa
-    - id: input_features
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
     - id: story_in_qa
       kind: precondition
       type: state
-      expression: cel
-      value: status == "in-qa"
-    - id: qa_signoff_and_security_verdict_committed
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.qa_signoff_and_security_verdict_committed)
-        && unit.attestations.qa_signoff_and_security_verdict_committed
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "in-qa"
     - id: status_committed_awaiting_pr_with_cost
       kind: postcondition
-      type: transition
-      expression: cel
-      value: status == "awaiting-pr" && has(unit.cost)
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "awaiting-pr" && has(unit.cost)
   - id: pr-gate
     kind: gate
     gate: ★ PR Gate
@@ -189,29 +116,10 @@ workflow:
       kind: precondition
       type: after
       step_id: verify-story
-    - id: input_features
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
     - id: story_awaiting_pr
       kind: precondition
       type: state
-      expression: cel
-      value: status == "awaiting-pr"
-    - id: gate_packet_ok
-      kind: precondition
-      type: state
-      expression: cel
-      value: gate_packet_ok
-    - id: output_gate_decisions_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/gate-decisions.md
-    - id: story_merged_and_rolled_up
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.story_merged_and_rolled_up)
-        && unit.attestations.story_merged_and_rolled_up
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "awaiting-pr"

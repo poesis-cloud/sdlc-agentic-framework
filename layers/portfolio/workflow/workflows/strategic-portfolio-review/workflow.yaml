@@ -8,29 +8,6 @@ workflow:
     kind: author
     actor: '@business-owner'
     output: strategic-themes
-    conditions:
-    - id: input_strategic_themes_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/strategic-themes.md
-    - id: input_epics
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/epics/
-    - id: business_owner_wsjf_rerank_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.business_owner_wsjf_rerank_recorded)
-        && unit.attestations.business_owner_wsjf_rerank_recorded
-    - id: strategic_theme_fit_or_revision_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.strategic_theme_fit_or_revision_recorded)
-        && unit.attestations.strategic_theme_fit_or_revision_recorded
   - id: challenge-runway
     kind: challenge
     actor: '@enterprise-architect'
@@ -40,12 +17,6 @@ workflow:
       kind: precondition
       type: after
       step_id: rerank
-    - id: enterprise_architect_runway_enabler_view_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.enterprise_architect_runway_enabler_view_recorded)
-        && unit.attestations.enterprise_architect_runway_enabler_view_recorded
   - id: challenge-security
     kind: challenge
     actor: '@security-expert'
@@ -55,12 +26,6 @@ workflow:
       kind: precondition
       type: after
       step_id: rerank
-    - id: security_risk_lens_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.security_risk_lens_recorded)
-        && unit.attestations.security_risk_lens_recorded
   - id: owner-rewrite
     kind: author
     actor: '@business-owner'
@@ -74,12 +39,6 @@ workflow:
       kind: precondition
       type: after
       step_id: challenge-security
-    - id: owner_rewrite_recorded_after_challenges
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.owner_rewrite_recorded_after_challenges)
-        && unit.attestations.owner_rewrite_recorded_after_challenges
   - id: decide
     kind: commit
     actor: central-supervisor (Business-Owner hat)
@@ -89,35 +48,3 @@ workflow:
       kind: precondition
       type: after
       step_id: owner-rewrite
-    - id: input_epics
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/epics/
-    - id: output_portfolio_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/kanban/portfolio.md
-    - id: output_gate_decisions_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/gate-decisions.md
-    - id: central_supervisor_pivot_persevere_stop_recorded
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.central_supervisor_pivot_persevere_stop_recorded)
-        && unit.attestations.central_supervisor_pivot_persevere_stop_recorded
-    - id: workflow_improvement_ledger_triaged
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.workflow_improvement_ledger_triaged)
-        && unit.attestations.workflow_improvement_ledger_triaged
-    - id: no_open_blocking_items
-      kind: postcondition
-      type: state
-      expression: cel
-      value: open_items_clear

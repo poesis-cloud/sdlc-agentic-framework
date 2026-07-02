@@ -7,37 +7,27 @@ workflow:
     delegates_to: workflows/feature-derivation
     actor: '@release-train-engineer'
     conditions:
-    - id: input_epics
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/epics/
-    - id: approved_epic_provided
-      kind: precondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.approved_epic_provided)
-        && unit.attestations.approved_epic_provided
-    - id: output_unit_id_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
     - id: parent_epic_present
       kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.parent_epic)
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: has(unit.parent_epic)
     - id: feature_typed_business_or_enabler
       kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.type) && (unit.type == "business" || unit.type == "enabler")
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: has(unit.type) && (unit.type == "business" || unit.type == "enabler")
     - id: status_committed_funnel
       kind: postcondition
-      type: transition
-      expression: cel
-      value: status == "funnel"
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "funnel"
   - id: refine-feature
     kind: delegate
     delegates_to: workflows/feature-backlog-refinement
@@ -47,37 +37,27 @@ workflow:
       kind: precondition
       type: after
       step_id: derive-feature
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
     - id: feature_in_funnel
       kind: precondition
       type: state
-      expression: cel
-      value: status == "funnel"
-    - id: output_unit_id_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "funnel"
     - id: ac_and_wsjf_present
       kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.wsjf)
-    - id: refinement_roster_exercised
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.refinement_roster_exercised)
-        && unit.attestations.refinement_roster_exercised
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: has(unit.wsjf)
     - id: status_committed_refined
       kind: postcondition
-      type: transition
-      expression: cel
-      value: status == "refined"
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "refined"
   - id: feature-gate
     kind: gate
     gate: ★ Feature Gate
@@ -87,37 +67,13 @@ workflow:
       kind: precondition
       type: after
       step_id: refine-feature
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
-    - id: input_program_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/kanban/program.md
     - id: feature_refined
       kind: precondition
       type: state
-      expression: cel
-      value: status == "refined"
-    - id: no_open_blocking_items
-      kind: precondition
-      type: state
-      expression: cel
-      value: open_items_clear
-    - id: output_gate_decisions_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/gate-decisions.md
-    - id: feature_gate_verdict_recorded
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.feature_gate_verdict_recorded)
-        && unit.attestations.feature_gate_verdict_recorded
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "refined"
   - id: extend-runway
     kind: delegate
     delegates_to: workflows/architectural-runway-extension
@@ -127,27 +83,14 @@ workflow:
       kind: precondition
       type: after
       step_id: feature-gate
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
     - id: feature_is_structurant_else_trivial
       kind: precondition
       type: state
-      expression: cel
-      value: '!(has(unit.structurant) && unit.structurant) || status == "arch-pending"'
-    - id: output_unit_id_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
-    - id: architecture_pass_packet_committed
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.architecture_pass_packet_committed)
-        && unit.attestations.architecture_pass_packet_committed
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: '!(has(unit.structurant) && unit.structurant) || unit.status
+        == "arch-pending"'
   - id: architecture-gate
     kind: gate
     gate: ★ Architecture Gate
@@ -157,32 +100,6 @@ workflow:
       kind: precondition
       type: after
       step_id: extend-runway
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
-    - id: inventory_gate_complete_else_trivial
-      kind: precondition
-      type: state
-      expression: cel
-      value: inventory_complete
-    - id: no_open_blocking_items
-      kind: precondition
-      type: state
-      expression: cel
-      value: open_items_clear
-    - id: output_gate_decisions_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/gate-decisions.md
-    - id: architecture_gate_verdict_recorded
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.architecture_gate_verdict_recorded)
-        && unit.attestations.architecture_gate_verdict_recorded
   - id: plan-pi
     kind: delegate
     delegates_to: workflows/pi-planning
@@ -192,37 +109,20 @@ workflow:
       kind: precondition
       type: after
       step_id: architecture-gate
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
     - id: feature_ready
       kind: precondition
       type: state
-      expression: cel
-      value: status == "ready"
-    - id: dependencies_met
-      kind: precondition
-      type: state
-      expression: cel
-      value: depends_on_met
-    - id: output_program_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/kanban/program.md
-    - id: pi_objectives_risks_and_dispatch_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.pi_objectives_risks_and_dispatch_recorded)
-        && unit.attestations.pi_objectives_risks_and_dispatch_recorded
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "ready"
     - id: status_committed_committed
       kind: postcondition
-      type: transition
-      expression: cel
-      value: status == "committed"
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "committed"
   - id: start-implementing
     kind: direct
     actor: '@release-train-engineer'
@@ -231,31 +131,20 @@ workflow:
       kind: precondition
       type: after
       step_id: plan-pi
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
     - id: feature_committed
       kind: precondition
       type: state
-      expression: cel
-      value: status == "committed"
-    - id: first_child_story_ready
-      kind: precondition
-      type: state
-      expression: cel
-      value: size(child_stories) >= 1
-    - id: output_program_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/kanban/program.md
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "committed"
     - id: status_committed_in_progress
       kind: postcondition
-      type: transition
-      expression: cel
-      value: status == "in-progress"
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "in-progress"
   - id: pr-gate
     kind: gate
     gate: ★ PR Gate
@@ -265,28 +154,6 @@ workflow:
       kind: precondition
       type: after
       step_id: start-implementing
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
-    - id: child_story_awaiting_pr_staged
-      kind: precondition
-      type: state
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.child_story_awaiting_pr_staged)
-        && unit.attestations.child_story_awaiting_pr_staged
-    - id: output_gate_decisions_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/gate-decisions.md
-    - id: child_story_merged_and_rolled_up
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.child_story_merged_and_rolled_up)
-        && unit.attestations.child_story_merged_and_rolled_up
   - id: demo
     kind: delegate
     delegates_to: workflows/system-demo
@@ -296,32 +163,13 @@ workflow:
       kind: precondition
       type: after
       step_id: pr-gate
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
     - id: feature_in_progress
       kind: precondition
       type: state
-      expression: cel
-      value: status == "in-progress"
-    - id: all_child_stories_done
-      kind: precondition
-      type: state
-      expression: cel
-      value: all_children_done
-    - id: child_qa_signoffs_present
-      kind: precondition
-      type: state
-      expression: cel
-      value: child_qa_signoffs_present
-    - id: increment_staged_for_demo_gate
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.increment_staged_for_demo_gate)
-        && unit.attestations.increment_staged_for_demo_gate
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "in-progress"
   - id: demo-gate
     kind: gate
     gate: ★ Demo Gate
@@ -331,33 +179,10 @@ workflow:
       kind: precondition
       type: after
       step_id: demo
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
-    - id: feature_in_progress_children_done
-      kind: precondition
-      type: state
-      expression: cel
-      value: status == "in-progress" && all_children_done
-    - id: gate_packet_ok
-      kind: precondition
-      type: state
-      expression: cel
-      value: gate_packet_ok
-    - id: output_gate_decisions_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/gate-decisions.md
-    - id: output_unit_id_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
     - id: demo_accepted_cost_committed_and_vmo_notified
       kind: postcondition
-      type: transition
-      expression: cel
-      value: status == "done" && has(unit.cost)
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "done" && has(unit.cost)

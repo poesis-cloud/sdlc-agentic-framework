@@ -9,22 +9,14 @@ workflow:
     actor: '@developer'
     output: code-change
     conditions:
-    - id: input_features
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
     - id: story_in_active_range
       kind: precondition
       type: state
-      expression: cel
-      value: status == "ready" || status == "in-progress" || status == "in-review"
-    - id: driver_commit_with_tests
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.driver_commit_with_tests)
-        && unit.attestations.driver_commit_with_tests
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "ready" || unit.status == "in-progress" || unit.status
+        == "in-review"
   - id: critique
     kind: challenge
     actor: '@developer'
@@ -34,12 +26,6 @@ workflow:
       kind: precondition
       type: after
       step_id: drive
-    - id: navigator_critique_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.navigator_critique_recorded)
-        && unit.attestations.navigator_critique_recorded
   - id: critique-security
     kind: challenge
     actor: '@security-expert'
@@ -49,9 +35,3 @@ workflow:
       kind: precondition
       type: after
       step_id: drive
-    - id: security_review_recorded_or_trivial
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.security_review_recorded_or_trivial)
-        && unit.attestations.security_review_recorded_or_trivial

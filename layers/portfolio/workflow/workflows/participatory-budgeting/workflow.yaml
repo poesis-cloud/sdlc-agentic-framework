@@ -8,45 +8,14 @@ workflow:
     kind: challenge
     actor: '@business-owner'
     output: value-review
-    conditions:
-    - id: input_portfolio_yaml
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/portfolio.yaml
-    - id: input_epics
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/epics/
-    - id: business_owner_value_and_wsjf_argument_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.business_owner_value_and_wsjf_argument_recorded)
-        && unit.attestations.business_owner_value_and_wsjf_argument_recorded
   - id: arguments-split
     kind: challenge
     actor: '@enterprise-architect'
     output: architecture-review
-    conditions:
-    - id: enterprise_architect_business_enabler_split_argument_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.enterprise_architect_business_enabler_split_argument_recorded)
-        && unit.attestations.enterprise_architect_business_enabler_split_argument_recorded
   - id: arguments-guardrails
     kind: challenge
     actor: '@security-expert'
     output: security-review
-    conditions:
-    - id: security_risk_guardrails_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.security_risk_guardrails_recorded)
-        && unit.attestations.security_risk_guardrails_recorded
   - id: commit
     kind: commit
     actor: central-supervisor (Business-Owner hat)
@@ -64,36 +33,3 @@ workflow:
       kind: precondition
       type: after
       step_id: arguments-guardrails
-    - id: output_portfolio_yaml
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/portfolio.yaml
-    - id: output_portfolio_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/kanban/portfolio.md
-    - id: output_gate_decisions_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/gate-decisions.md
-    - id: central_supervisor_allocation_commitment_recorded
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.central_supervisor_allocation_commitment_recorded)
-        && unit.attestations.central_supervisor_allocation_commitment_recorded
-    - id: funded_epic_set_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.funded_epic_set_recorded)
-        && unit.attestations.funded_epic_set_recorded
-    - id: capacity_overcommit_check_passed
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.capacity_overcommit_check_passed)
-        && unit.attestations.capacity_overcommit_check_passed

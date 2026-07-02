@@ -8,30 +8,6 @@ workflow:
     kind: author
     actor: '@product-manager'
     output: inspect-adapt-findings
-    conditions:
-    - id: input_features
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
-    - id: pain_points_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.pain_points_recorded)
-        && unit.attestations.pain_points_recorded
-    - id: top_systemic_problems_root_caused
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.top_systemic_problems_root_caused)
-        && unit.attestations.top_systemic_problems_root_caused
-    - id: workflow_improvement_ledger_triaged
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.workflow_improvement_ledger_triaged)
-        && unit.attestations.workflow_improvement_ledger_triaged
   - id: record
     kind: commit
     actor: '@release-train-engineer'
@@ -41,9 +17,3 @@ workflow:
       kind: precondition
       type: after
       step_id: problem-solve
-    - id: inspect_adapt_document_committed
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.inspect_adapt_document_committed)
-        && unit.attestations.inspect_adapt_document_committed

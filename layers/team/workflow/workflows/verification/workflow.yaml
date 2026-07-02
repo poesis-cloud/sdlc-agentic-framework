@@ -8,47 +8,17 @@ workflow:
     kind: verify
     actor: '@quality-engineer'
     conditions:
-    - id: input_features
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
     - id: story_in_qa
       kind: precondition
       type: state
-      expression: cel
-      value: status == "in-qa"
-    - id: acceptance_criteria_and_dod_verified
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.acceptance_criteria_and_dod_verified)
-        && unit.attestations.acceptance_criteria_and_dod_verified
-    - id: qa_signoff_committed_on_pass_or_bug_report_on_fail
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.qa_signoff_committed_on_pass_or_bug_report_on_fail)
-        && unit.attestations.qa_signoff_committed_on_pass_or_bug_report_on_fail
-    - id: security_verdict_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.security_verdict_recorded)
-        && unit.attestations.security_verdict_recorded
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: unit.status == "in-qa"
     - id: story_cost_committed_once
       kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.cost)
-    - id: story_cost_snapshot_measured_once_from_logs
-      kind: invariant
-      type: content
-      expression: instruction
-      value: instructions/story-cost-snapshot-measured-once-from-logs.instructions.md
-    - id: board_publication_prepared_for_pr_gate
-      kind: postcondition
-      type: transition
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.board_publication_prepared_for_pr_gate)
-        && unit.attestations.board_publication_prepared_for_pr_gate
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: story
+      set_predicate: has(unit.cost)

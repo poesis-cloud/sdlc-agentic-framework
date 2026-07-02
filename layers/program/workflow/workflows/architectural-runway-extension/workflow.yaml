@@ -9,28 +9,13 @@ workflow:
     actor: '@system-architect'
     output: architecture-decision-inventory
     conditions:
-    - id: input_unit_id_md
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/{unit_id}.md
     - id: feature_arch_pending_structurant
       kind: precondition
       type: state
-      expression: cel
-      value: status == "arch-pending" && has(unit.structurant)
-    - id: decision_inventory_committed
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.decision_inventory_committed)
-        && unit.attestations.decision_inventory_committed
-    - id: adr_or_inventory_waiver_for_each_decision_unit
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.adr_or_inventory_waiver_for_each_decision_unit)
-        && unit.attestations.adr_or_inventory_waiver_for_each_decision_unit
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: unit.status == "arch-pending" && has(unit.structurant)
   - id: challenge-security
     kind: challenge
     actor: '@security-expert'
@@ -40,12 +25,6 @@ workflow:
       kind: precondition
       type: after
       step_id: inventory
-    - id: security_trust_boundary_challenge_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.security_trust_boundary_challenge_recorded)
-        && unit.attestations.security_trust_boundary_challenge_recorded
   - id: challenge-operability
     kind: challenge
     actor: '@operator'
@@ -55,12 +34,6 @@ workflow:
       kind: precondition
       type: after
       step_id: inventory
-    - id: operator_operability_challenge_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.operator_operability_challenge_recorded)
-        && unit.attestations.operator_operability_challenge_recorded
   - id: challenge-feasibility
     kind: challenge
     actor: '@developer'
@@ -70,12 +43,6 @@ workflow:
       kind: precondition
       type: after
       step_id: inventory
-    - id: developer_feasibility_challenge_recorded
-      kind: postcondition
-      type: challenge
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.developer_feasibility_challenge_recorded)
-        && unit.attestations.developer_feasibility_challenge_recorded
   - id: owner-rewrite
     kind: author
     actor: '@system-architect'
@@ -93,23 +60,6 @@ workflow:
       kind: precondition
       type: after
       step_id: challenge-feasibility
-    - id: owner_rewrite_completed_after_challenge
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.owner_rewrite_completed_after_challenge)
-        && unit.attestations.owner_rewrite_completed_after_challenge
-    - id: runway_gaps_classified_and_nfr_updates_committed_or_waived
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.runway_gaps_classified_and_nfr_updates_committed_or_waived)
-        && unit.attestations.runway_gaps_classified_and_nfr_updates_committed_or_waived
-    - id: no_open_blocking_items
-      kind: postcondition
-      type: state
-      expression: cel
-      value: open_items_clear
   - id: stage-gate
     kind: gate
     gate: ★ Architecture Gate
@@ -119,20 +69,3 @@ workflow:
       kind: precondition
       type: after
       step_id: owner-rewrite
-    - id: architecture_gate_packet_ready
-      kind: postcondition
-      type: state
-      expression: cel
-      value: gate_packet_ok
-    - id: replay_on_late_enabler_handled
-      kind: postcondition
-      type: consistency
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.replay_on_late_enabler_handled)
-        && unit.attestations.replay_on_late_enabler_handled
-    - id: unresolved_gate_questions_recorded
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.unresolved_gate_questions_recorded)
-        && unit.attestations.unresolved_gate_questions_recorded

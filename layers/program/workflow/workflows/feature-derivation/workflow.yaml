@@ -9,54 +9,40 @@ workflow:
     actor: '@product-manager'
     output: feature
     conditions:
-    - id: input_epics
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/epics/
-    - id: approved_epic_provided
-      kind: precondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.approved_epic_provided)
-        && unit.attestations.approved_epic_provided
     - id: parent_epic_present
       kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.parent_epic)
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: has(unit.parent_epic)
     - id: feature_typed_business_or_enabler
       kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.type) && (unit.type == "business" || unit.type == "enabler")
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: has(unit.type) && (unit.type == "business" || unit.type == "enabler")
   - id: derive-enabler
     kind: author
     actor: '@system-architect'
     output: feature-enabler
     conditions:
-    - id: input_epics
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/epics/
-    - id: approved_epic_provided
-      kind: precondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.approved_epic_provided)
-        && unit.attestations.approved_epic_provided
     - id: after_derive_business
       kind: precondition
       type: after
       step_id: derive-business
     - id: parent_epic_present
       kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.parent_epic)
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: has(unit.parent_epic)
     - id: feature_typed_business_or_enabler
       kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.type) && (unit.type == "business" || unit.type == "enabler")
+      type: state
+      set_selector:
+        set_type: unit
+        schema_id: feature
+      set_predicate: has(unit.type) && (unit.type == "business" || unit.type == "enabler")

@@ -8,33 +8,5 @@ workflow:
     kind: commit
     actor: '@release-train-engineer'
     output: program-kanban
-    conditions:
-    - id: input_features
-      kind: precondition
-      type: input
-      expression: ref
-      value: portfolio/{product}/features/
-    - id: output_program_md
-      kind: postcondition
-      type: output
-      expression: ref
-      value: portfolio/{product}/kanban/program.md
-    - id: feature_progress_and_dependency_reconciled
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.feature_progress_and_dependency_reconciled)
-        && unit.attestations.feature_progress_and_dependency_reconciled
-    - id: roam_risks_updated
-      kind: postcondition
-      type: content
-      expression: cel
-      value: has(unit.attestations) && has(unit.attestations.roam_risks_updated) &&
-        unit.attestations.roam_risks_updated
-    - id: blocked_or_unblocked_reason_present
-      kind: postcondition
-      type: state
-      expression: cel
-      value: blocked_route_ok
     instructions:
     - instructions/scope-architecture-operator-reconcile-recorded.instructions.md
