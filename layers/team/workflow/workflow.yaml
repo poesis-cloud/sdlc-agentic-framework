@@ -38,7 +38,6 @@ workflow:
       set_predicate: selected.all(x, x.status == "backlog")
   - id: story-gate
     kind: gate
-    gate: ★ Story Gate
     actor: '@scrum-master'
     conditions:
     - id: after_groom_story
@@ -133,7 +132,6 @@ workflow:
       set_predicate: selected.all(x, x.status == "awaiting-pr" && has(x.cost))
   - id: pr-gate
     kind: gate
-    gate: ★ PR Gate
     actor: central-supervisor (Business-Owner hat)
     conditions:
     - id: after_verify_story

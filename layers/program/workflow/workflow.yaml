@@ -79,7 +79,6 @@ workflow:
       set_predicate: selected.all(x, x.status == "refined")
   - id: feature-gate
     kind: gate
-    gate: ★ Feature Gate
     actor: '@release-train-engineer'
     conditions:
     - id: after_refine_feature
@@ -118,7 +117,6 @@ workflow:
         == "arch-pending")
   - id: architecture-gate
     kind: gate
-    gate: ★ Architecture Gate
     actor: central-supervisor (Enterprise-Architect hat)
     conditions:
     - id: after_extend_runway
@@ -184,7 +182,6 @@ workflow:
       set_predicate: selected.all(x, x.status == "in-progress")
   - id: pr-gate
     kind: gate
-    gate: ★ PR Gate
     actor: central-supervisor (Business-Owner hat)
     conditions:
     - id: after_start_implementing
@@ -212,7 +209,6 @@ workflow:
       set_predicate: selected.all(x, x.status == "in-progress")
   - id: demo-gate
     kind: gate
-    gate: ★ Demo Gate
     actor: central-supervisor (Business-Owner hat)
     conditions:
     - id: after_demo

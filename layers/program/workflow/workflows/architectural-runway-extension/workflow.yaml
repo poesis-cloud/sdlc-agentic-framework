@@ -65,7 +65,6 @@ workflow:
       step_id: challenge-feasibility
   - id: stage-gate
     kind: gate
-    gate: ★ Architecture Gate
     actor: '@release-train-engineer'
     conditions:
     - id: after_owner_rewrite

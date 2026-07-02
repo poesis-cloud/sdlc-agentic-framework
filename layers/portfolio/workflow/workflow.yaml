@@ -97,7 +97,6 @@ workflow:
       set_predicate: selected.all(x, x.status == "analyzing")
   - id: epic-gate
     kind: gate
-    gate: ★ Epic Gate
     actor: central-supervisor (Business-Owner hat)
     conditions:
     - id: after_architect_epic
@@ -134,7 +133,6 @@ workflow:
       set_predicate: selected.all(x, x.status == "implementing")
   - id: epic-outcome-gate
     kind: gate
-    gate: ★ Epic Outcome Gate
     actor: central-supervisor (Business-Owner hat)
     conditions:
     - id: after_start_implementing

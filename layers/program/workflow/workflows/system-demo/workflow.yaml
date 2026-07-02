@@ -29,7 +29,6 @@ workflow:
     output: operability-review
   - id: demo-gate
     kind: gate
-    gate: ★ Demo Gate
     actor: central-supervisor
     conditions:
     - id: after_demo
