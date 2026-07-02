@@ -15,6 +15,37 @@ The harness is check-only and artifact-driven.
 
 The harness never writes business artifacts itself. Status transitions, gate decisions, and authored deliverables are all produced by dispatched agents and then checked by the harness.
 
+## Invariants
+
+The harness enforces the following invariants.
+
+### C0 - Portfolio state definition
+
+Portfolio state is the union of:
+
+- Persisted portfolio artifacts (business, governance, and orchestration deliverables under portfolio state paths).
+- Harness logs (run journals and hook streams) persisted under the portfolio logs paths.
+
+Both are first-class state for deterministic checks and replay.
+
+### C1 - Portfolio-state scope
+
+All preconditions and postconditions are evaluated strictly against persisted portfolio state.
+
+### C2 - Harness assertion boundary
+
+Condition checks executed by the harness only assert portfolio state. The harness does not assert private agent memory or transient, non-persisted host context.
+
+### C3 - Agent sourcing freedom
+
+The actor agent may source from portfolio data, external systems, tools, or web context. Harness pass or fail is based only on persisted portfolio state.
+
+### C5 - Schema-bound persisted artifacts
+
+Every persisted artifact used in condition evaluation must be cataloged and schema-bound. The selector model has one selector type: selecting persisted portfolio artifacts.
+
+Where a condition depends on log evidence, that evidence is read from persisted harness logs (part of portfolio state) and asserted as state; logs are not business artifacts.
+
 ## Two trigger planes, one command system
 
 Every harness behavior is exposed as a harness command. The same command system is entered from two places.
